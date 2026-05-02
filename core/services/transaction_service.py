@@ -45,6 +45,7 @@ class TransactionService:
         
         # Validate
         TransactionValidator.validate_checkout(item, user)
+        TransactionValidator.validate_expected_return_date(expected_return_date)
         
         # Update item status
         item.status = 'checked_out'
@@ -67,8 +68,8 @@ class TransactionService:
     @transaction.atomic
     def return_item(
         item: 'ItemInstance',
-        user: 'User',
         created_by: 'User',
+        user: Optional['User'] = None,
         notes: str = ''
     ) -> 'Transaction':
         """
@@ -90,18 +91,20 @@ class TransactionService:
         
         # Validate
         TransactionValidator.validate_return(item, user)
+
+        # Resolve user from active checkout if not explicitly provided.
+        checkout_txn = Transaction.objects.filter(
+            item=item,
+            transaction_type='checkout',
+            returned_at__isnull=True
+        ).first()
+        resolved_user = user or (checkout_txn.user if checkout_txn else None)
         
         # Update item status
         item.status = 'available'
         item.save(update_fields=['status', 'updated_at'])
         
         # Update checkout transaction
-        checkout_txn = Transaction.objects.filter(
-            item=item,
-            transaction_type='checkout',
-            returned_at__isnull=True
-        ).first()
-        
         if checkout_txn:
             checkout_txn.returned_at = timezone.now()
             checkout_txn.save(update_fields=['returned_at'])
@@ -109,7 +112,7 @@ class TransactionService:
         # Create return transaction
         txn = Transaction.objects.create(
             item=item,
-            user=user,
+            user=resolved_user,
             transaction_type='return',
             date_out=timezone.now(),
             created_by=created_by,
