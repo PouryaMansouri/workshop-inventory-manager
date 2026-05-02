@@ -365,6 +365,38 @@ COL-WRN-001,NEW-003,Shelf A
 
 ## Troubleshooting
 
+### Issue: Product SKU Auto-Generation Failed
+
+**SKU Logic:**
+1. Product is inserted first to get `id`.
+2. SKU is generated deterministically:
+   - `WORKSHOP_CODE-CATEGORY_CODE-<PRODUCT_ID_PADDED_6>`
+   - Example: `MECH-WRENCH-000123`
+3. SKU is saved on the same product row.
+
+**How to detect:**
+```bash
+python manage.py repair_product_skus --settings=config.settings.local
+```
+
+This reports:
+- `MISSING`: empty `sku_code`
+- `INVALID`: `sku_code` differs from expected deterministic value
+
+**How to rerun/retry and fix:**
+```bash
+python manage.py repair_product_skus --settings=config.settings.local --fix
+```
+
+**Repair only one product:**
+```bash
+python manage.py repair_product_skus --settings=config.settings.local --product-id 123 --fix
+```
+
+**Operational guidance:**
+- Run check after bulk import/migration.
+- Add the check command to periodic operations.
+
 ### Issue: Cannot Checkout Item
 
 **Possible Causes:**

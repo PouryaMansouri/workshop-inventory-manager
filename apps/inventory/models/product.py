@@ -1,8 +1,12 @@
 """
 Product model for tool types/templates.
 """
+import logging
+
 from django.db import models
 from simple_history.models import HistoricalRecords
+
+logger = logging.getLogger(__name__)
 
 
 class Product(models.Model):
@@ -84,14 +88,29 @@ class Product(models.Model):
         return f'{self.name} ({self.sku_code})'
     
     def save(self, *args, **kwargs) -> None:
-        """Generate SKU code on first save."""
-        if not self.sku_code:
-            # Generate SKU: {workshop_code}-{category_code}-{id}
-            # We need to save first to get ID, then update SKU
-            super().save(*args, **kwargs)
-            self.sku_code = self._generate_sku()
-            kwargs['force_insert'] = False
+        """
+        Persist product and auto-generate SKU after first insert.
+
+        Flow:
+        1) Insert row first to get primary key.
+        2) Build deterministic SKU: WORKSHOP-CATEGORY-<id:06d>
+        3) Persist SKU with minimal update.
+        """
+        is_new = self.pk is None
         super().save(*args, **kwargs)
+
+        if is_new and not self.sku_code:
+            sku = self._generate_sku()
+            # Use queryset update to avoid recursive save and keep retry simple.
+            updated = type(self).objects.filter(pk=self.pk, sku_code='').update(sku_code=sku)
+            if updated:
+                self.sku_code = sku
+                logger.info("SKU generated for product_id=%s sku=%s", self.pk, sku)
+            else:
+                logger.error(
+                    "SKU generation skipped for product_id=%s; row already has sku_code.",
+                    self.pk,
+                )
     
     def _generate_sku(self) -> str:
         """Generate SKU code in format: WORKSHOP-CATEGORY-ID."""

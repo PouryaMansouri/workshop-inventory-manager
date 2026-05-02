@@ -8,6 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local')
 django.setup()
 
 from django.contrib.auth.models import User
+from apps.users.models import UserExtension
 from apps.inventory.models import Category, WorkshopUnit, UnitOfMeasure, Location, Product, ItemInstance
 from apps.transactions.models import Transaction
 from datetime import datetime, timedelta
@@ -30,8 +31,8 @@ def create_users():
     
     # Staff users
     staff_users = [
-        ('manager', 'مدیر', 'انبار', 'manager@workshop.ir', 'manager123'),
-        ('operator', 'اپراتور', 'انبار', 'operator@workshop.ir', 'operator123'),
+        ('manager', 'مدیر', 'انبار', '', 'manager123'),
+        ('operator', 'اپراتور', 'انبار', '', 'operator123'),
     ]
     
     for username, first_name, last_name, email, password in staff_users:
@@ -48,9 +49,9 @@ def create_users():
     
     # Regular users (workers)
     workers = [
-        ('ali_rezaei', 'علی', 'رضایی', 'ali@workshop.ir', 'worker123'),
-        ('sara_ahmadi', 'سارا', 'احمدی', 'sara@workshop.ir', 'worker123'),
-        ('reza_karimi', 'رضا', 'کریمی', 'reza@workshop.ir', 'worker123'),
+        ('ali_rezaei', 'علی', 'رضایی', '', 'worker123'),
+        ('sara_ahmadi', 'سارا', 'احمدی', '', 'worker123'),
+        ('reza_karimi', 'رضا', 'کریمی', '', 'worker123'),
     ]
     
     for username, first_name, last_name, email, password in workers:
@@ -63,6 +64,40 @@ def create_users():
                 last_name=last_name
             )
             print(f"✓ Worker created: {username} / {password}")
+
+    # UserExtension data (phone required + extra profile fields)
+    extension_data = {
+        'admin': ('09120000001', 'ADM-001', 'فناوری اطلاعات'),
+        'manager': ('09120000002', 'MNG-001', 'انبار'),
+        'operator': ('09120000003', 'OPR-001', 'عملیات'),
+        'ali_rezaei': ('09120000004', 'WRK-001', 'تعمیرگاه مکانیک'),
+        'sara_ahmadi': ('09120000005', 'WRK-002', 'تعمیرگاه برق'),
+        'reza_karimi': ('09120000006', 'WRK-003', 'تعمیرگاه خنک‌کاری'),
+    }
+
+    for username, (phone, personnel_code, department) in extension_data.items():
+        user = User.objects.get(username=username)
+        ext, _ = UserExtension.objects.get_or_create(
+            user=user,
+            defaults={
+                'phone_number': phone,
+                'personnel_code': personnel_code,
+                'department': department,
+            }
+        )
+
+        updated = False
+        if not ext.phone_number:
+            ext.phone_number = phone
+            updated = True
+        if not ext.personnel_code:
+            ext.personnel_code = personnel_code
+            updated = True
+        if not ext.department:
+            ext.department = department
+            updated = True
+        if updated:
+            ext.save()
 
 def create_categories():
     """Create product categories."""

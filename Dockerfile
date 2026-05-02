@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     netcat-traditional \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements

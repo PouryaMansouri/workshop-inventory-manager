@@ -67,16 +67,20 @@ DJANGO_SETTINGS_MODULE=config.settings.local python manage.py runserver
 
 ## 👤 اکانت‌های تستی
 
-پس از اجرای `seed_data.py`، اکانت‌های زیر ایجاد می‌شوند:
+پس از اجرای `seed_data.py`، اکانت‌ها و اطلاعات تکمیلی زیر ایجاد می‌شوند:
 
-| نقش | Username | Password |
-|-----|----------|----------|
-| Superuser | `admin` | `admin123` |
-| Manager | `manager` | `manager123` |
-| Operator | `operator` | `operator123` |
-| Worker | `ali_rezaei` | `worker123` |
-| Worker | `sara_ahmadi` | `worker123` |
-| Worker | `reza_karimi` | `worker123` |
+| نقش | Username | Password | Phone | Personnel Code | Department |
+|-----|----------|----------|-------|----------------|------------|
+| Superuser | `admin` | `admin123` | `09120000001` | `ADM-001` | فناوری اطلاعات |
+| Manager | `manager` | `manager123` | `09120000002` | `MNG-001` | انبار |
+| Operator | `operator` | `operator123` | `09120000003` | `OPR-001` | عملیات |
+| Worker | `ali_rezaei` | `worker123` | `09120000004` | `WRK-001` | تعمیرگاه مکانیک |
+| Worker | `sara_ahmadi` | `worker123` | `09120000005` | `WRK-002` | تعمیرگاه برق |
+| Worker | `reza_karimi` | `worker123` | `09120000006` | `WRK-003` | تعمیرگاه خنک‌کاری |
+
+نکات:
+- `email` برای کاربران اجباری نیست.
+- `phone_number` در اطلاعات تکمیلی اجباری است.
 
 ---
 
@@ -288,6 +292,12 @@ black apps/ core/ --check
 
 # مشاهده migrations
 python manage.py showmigrations
+
+# بررسی سلامت SKU محصولات
+python manage.py repair_product_skus --settings=config.settings.local
+
+# بازسازی/اصلاح SKU های خراب یا خالی
+python manage.py repair_product_skus --settings=config.settings.local --fix
 
 # ریست دیتابیس (SQLite)
 rm db.sqlite3
