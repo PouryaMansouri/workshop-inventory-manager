@@ -1,0 +1,75 @@
+/* Custom CSS for Workshop Tool Inventory Admin */
+
+/* RTL Layout */
+body {
+    direction: rtl;
+    text-align: right;
+}
+
+/* Adjust admin header */
+#header {
+    direction: rtl;
+}
+
+/* Adjust breadcrumbs */
+.breadcrumbs {
+    direction: rtl;
+    text-align: right;
+}
+
+/* Adjust module headers */
+.module h2, 
+.module caption, 
+.inline-group h2 {
+    text-align: right;
+}
+
+/* Adjust form rows */
+.form-row {
+    direction: rtl;
+}
+
+/* Adjust tables */
+#changelist table {
+    direction: rtl;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 3px 10px;
+    border-radius: 3px;
+    color: white;
+    font-weight: bold;
+}
+
+.status-available {
+    background-color: #28a745;
+}
+
+.status-checked-out {
+    background-color: #007bff;
+}
+
+.status-maintenance {
+    background-color: #fd7e14;
+}
+
+.status-lost {
+    background-color: #dc3545;
+}
+
+.status-damaged {
+    background-color: #6c757d;
+}
+
+/* Low stock warning */
+.low-stock {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Overdue warning */
+.overdue {
+    color: #dc3545;
+    font-weight: bold;
+}

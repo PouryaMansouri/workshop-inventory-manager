@@ -1,0 +1,214 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div style="margin-bottom: 30px;">
+    <h1 style="margin-bottom: 20px;">داشبورد مدیریت ابزار کارگاه</h1>
+    
+    <!-- Statistics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">کل محصولات</div>
+            <div style="font-size: 32px; font-weight: bold;">{{ statistics.total_products }}</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">کل ابزارها</div>
+            <div style="font-size: 32px; font-weight: bold;">{{ statistics.total_items }}</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">موجود</div>
+            <div style="font-size: 32px; font-weight: bold;">{{ statistics.available }}</div>
+            <div style="font-size: 12px; opacity: 0.8;">{{ statistics.available_percent }}%</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">تحویل داده شده</div>
+            <div style="font-size: 32px; font-weight: bold;">{{ statistics.checked_out }}</div>
+            <div style="font-size: 12px; opacity: 0.8;">{{ statistics.checked_out_percent }}%</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">در تعمیر</div>
+            <div style="font-size: 32px; font-weight: bold;">{{ statistics.maintenance }}</div>
+            <div style="font-size: 12px; opacity: 0.8;">{{ statistics.maintenance_percent }}%</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">گم شده / خراب</div>
+            <div style="font-size: 32px; font-weight: bold;">{{ statistics.lost|add:statistics.damaged }}</div>
+            <div style="font-size: 12px; opacity: 0.8;">{{ statistics.lost_damaged_percent }}%</div>
+        </div>
+    </div>
+    
+    <!-- Dashboard Widgets Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+        
+        <!-- Low Stock Products -->
+        <div class="module" style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="background: #dc3545; color: white; padding: 15px; margin: 0; border-radius: 8px 8px 0 0;">
+                ⚠ هشدار موجودی کم
+            </h2>
+            <div style="padding: 15px;">
+                {% if low_stock %}
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 10px; text-align: right;">محصول</th>
+                            <th style="padding: 10px; text-align: center;">موجودی</th>
+                            <th style="padding: 10px; text-align: center;">حداقل</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in low_stock %}
+                        <tr style="border-bottom: 1px solid #dee2e6; {% if product.is_critical %}background: #fff5f5;{% endif %}">
+                            <td style="padding: 10px;">
+                                <strong>{{ product.name }}</strong><br>
+                                <small style="color: #6c757d;">{{ product.sku }}</small>
+                            </td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span style="color: {% if product.is_critical %}#dc3545{% else %}#fd7e14{% endif %}; font-weight: bold; font-size: 18px;">
+                                    {{ product.current_stock }}
+                                </span>
+                            </td>
+                            <td style="padding: 10px; text-align: center;">
+                                {{ product.minimum_stock }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="text-align: center; color: #28a745; padding: 20px;">
+                    ✓ همه محصولات موجودی کافی دارند
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Overdue Returns -->
+        <div class="module" style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="background: #fd7e14; color: white; padding: 15px; margin: 0; border-radius: 8px 8px 0 0;">
+                ⏰ بازگشت‌های معوقه
+            </h2>
+            <div style="padding: 15px;">
+                {% if overdue %}
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 10px; text-align: right;">ابزار</th>
+                            <th style="padding: 10px; text-align: right;">کاربر</th>
+                            <th style="padding: 10px; text-align: center;">تاخیر</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in overdue %}
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 10px;">
+                                <strong>{{ item.item_name }}</strong><br>
+                                <small style="color: #6c757d;">{{ item.barcode }}</small>
+                            </td>
+                            <td style="padding: 10px;">
+                                {{ item.user }}
+                            </td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span style="color: #dc3545; font-weight: bold;">
+                                    {{ item.days_overdue }} روز
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="text-align: center; color: #28a745; padding: 20px;">
+                    ✓ بازگشت معوقه‌ای وجود ندارد
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Currently Checked Out -->
+        <div class="module" style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="background: #007bff; color: white; padding: 15px; margin: 0; border-radius: 8px 8px 0 0;">
+                📦 ابزارهای تحویل داده شده
+            </h2>
+            <div style="padding: 15px;">
+                {% if checked_out %}
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 10px; text-align: right;">ابزار</th>
+                            <th style="padding: 10px; text-align: right;">کاربر</th>
+                            <th style="padding: 10px; text-align: center;">مدت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in checked_out %}
+                        <tr style="border-bottom: 1px solid #dee2e6; {% if item.is_overdue %}background: #fff5f5;{% endif %}">
+                            <td style="padding: 10px;">
+                                <strong>{{ item.item_name }}</strong><br>
+                                <small style="color: #6c757d;">{{ item.barcode }}</small>
+                            </td>
+                            <td style="padding: 10px;">
+                                {{ item.user }}
+                            </td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span style="{% if item.is_overdue %}color: #dc3545; font-weight: bold;{% endif %}">
+                                    {{ item.days_out }} روز
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="text-align: center; color: #6c757d; padding: 20px;">
+                    هیچ ابزاری تحویل داده نشده است
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Recent Transactions -->
+        <div class="module" style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="background: #28a745; color: white; padding: 15px; margin: 0; border-radius: 8px 8px 0 0;">
+                📋 تراکنش‌های اخیر
+            </h2>
+            <div style="padding: 15px;">
+                {% if recent_transactions %}
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tbody>
+                        {% for txn in recent_transactions %}
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 10px;">
+                                <span style="display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; color: white;
+                                    {% if txn.type == 'checkout' %}background: #007bff;
+                                    {% elif txn.type == 'return' %}background: #28a745;
+                                    {% elif txn.type == 'consume' %}background: #6f42c1;
+                                    {% elif txn.type == 'lost' %}background: #dc3545;
+                                    {% elif txn.type == 'damaged' %}background: #fd7e14;
+                                    {% endif %}">
+                                    {{ txn.type_display }}
+                                </span>
+                                <strong style="margin-right: 10px;">{{ txn.item_name }}</strong><br>
+                                <small style="color: #6c757d;">{{ txn.user }} - {{ txn.created_at|date:"Y-m-d H:i" }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="text-align: center; color: #6c757d; padding: 20px;">
+                    تراکنشی ثبت نشده است
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+{{ block.super }}
+{% endblock %}

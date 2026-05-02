@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 20px auto;">
+    <h1>{{ title }}</h1>
+    
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <h3>ابزارهای انتخاب شده ({{ items|length }} مورد):</h3>
+        <ul>
+            {% for item in items %}
+            <li><strong>{{ item.product.name }}</strong> - {{ item.barcode }} - مکان فعلی: {{ item.location.name }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <table>
+            {{ form.as_table }}
+        </table>
+        <div style="margin-top: 20px;">
+            <input type="submit" value="تغییر مکان" class="default" style="padding: 10px 20px; font-size: 14px;">
+            <a href="../../" class="button" style="padding: 10px 20px; margin-right: 10px;">انصراف</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

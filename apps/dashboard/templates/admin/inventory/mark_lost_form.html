@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 20px auto;">
+    <h1>{{ title }}</h1>
+    
+    <div style="background: #fff5f5; border: 2px solid #dc3545; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <h3 style="color: #dc3545;">⚠ هشدار: این عملیات غیرقابل بازگشت است</h3>
+        <p>ابزارهای زیر به عنوان گم شده ثبت خواهند شد:</p>
+        <ul>
+            {% for item in items %}
+            <li><strong>{{ item.product.name }}</strong> - {{ item.barcode }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <table>
+            {{ form.as_table }}
+        </table>
+        <div style="margin-top: 20px;">
+            <input type="submit" value="ثبت به عنوان گم شده" class="default" style="padding: 10px 20px; font-size: 14px; background: #dc3545;">
+            <a href="../../" class="button" style="padding: 10px 20px; margin-right: 10px;">انصراف</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

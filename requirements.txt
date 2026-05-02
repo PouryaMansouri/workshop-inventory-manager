@@ -1,0 +1,30 @@
+# Core Django
+Django==5.0.1
+psycopg2-binary==2.9.9
+
+# Admin enhancements
+django-simple-history==3.4.0
+django-filter==23.5
+
+# Barcode generation
+python-barcode==0.15.1
+qrcode[pil]==7.4.2
+Pillow==10.2.0
+
+# PDF generation
+reportlab==4.0.9
+
+# Testing
+pytest==7.4.4
+pytest-django==4.7.0
+factory-boy==3.3.0
+pytest-cov==4.1.0
+
+# Code quality
+mypy==1.8.0
+django-stubs==4.2.7
+types-Pillow==10.2.0.20240125
+
+# Development
+python-dotenv==1.0.0
+gunicorn==21.2.0

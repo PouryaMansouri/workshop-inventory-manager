@@ -1,0 +1,102 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .csv-import-container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .csv-format-info {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+        margin: 20px 0;
+        direction: rtl;
+    }
+    
+    .csv-format-info h3 {
+        margin-top: 0;
+        color: #495057;
+    }
+    
+    .csv-format-info code {
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+    }
+    
+    .csv-example {
+        background: #fff;
+        border: 1px solid #ced4da;
+        padding: 10px;
+        margin: 10px 0;
+        font-family: monospace;
+        font-size: 12px;
+        white-space: pre;
+        direction: ltr;
+        text-align: left;
+    }
+    
+    .form-row {
+        margin: 20px 0;
+    }
+    
+    .submit-row {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="csv-import-container">
+    <h1>{{ title }}</h1>
+    
+    <div class="csv-format-info">
+        <h3>فرمت فایل CSV</h3>
+        <p>فایل CSV باید شامل سه ستون زیر باشد:</p>
+        <ul>
+            <li><code>product_sku</code>: کد SKU محصول (الزامی)</li>
+            <li><code>serial_number</code>: شماره سریال ابزار (الزامی)</li>
+            <li><code>location</code>: نام مکان (اختیاری)</li>
+        </ul>
+        
+        <h4>نمونه فایل CSV:</h4>
+        <div class="csv-example">product_sku,serial_number,location
+COL-WRN-001,12345,Main Warehouse
+COL-WRN-001,12346,Shelf A
+ELC-SCR-002,98765,Service Van</div>
+        
+        <p><strong>نکات مهم:</strong></p>
+        <ul>
+            <li>محصول با SKU مشخص شده باید از قبل در سیستم موجود باشد</li>
+            <li>شماره سریال نباید تکراری باشد</li>
+            <li>اگر مکان مشخص شود، باید از قبل در سیستم موجود باشد</li>
+            <li>در صورت بروز خطا، هیچ موردی وارد نمی‌شود</li>
+        </ul>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            {{ form.as_p }}
+        </div>
+        
+        <div class="submit-row">
+            <input type="submit" value="وارد کردن" class="default" />
+            <a href="{% url 'admin:inventory_iteminstance_changelist' %}" class="button cancel-link">انصراف</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
