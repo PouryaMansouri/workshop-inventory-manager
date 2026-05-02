@@ -1,0 +1,109 @@
+{% load static %}
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تاریخچه ابزارهای من</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --text: #122033;
+      --muted: #64748b;
+      --border: #dbe3ef;
+      --ok: #166534;
+      --warn: #b45309;
+      --danger: #b91c1c;
+      --shadow: 0 12px 30px rgba(15, 23, 42, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1220;
+        --surface: #111a2c;
+        --text: #e5edf8;
+        --muted: #9fb0c9;
+        --border: #26344f;
+        --ok: #4ade80;
+        --warn: #f59e0b;
+        --danger: #f87171;
+        --shadow: 0 14px 34px rgba(0, 0, 0, .42);
+      }
+    }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: Tahoma, "Segoe UI", sans-serif; }
+    .wrap { max-width: 1180px; margin: 24px auto; padding: 0 14px; }
+    .head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; }
+    h1 { margin:0; font-size: clamp(1.1rem, 2.2vw, 1.8rem); }
+    .sub { color: var(--muted); margin: 4px 0 0; }
+    .chip { background: var(--surface); border:1px solid var(--border); border-radius:999px; padding:8px 12px; box-shadow:var(--shadow); font-weight:700; }
+    .card { background: var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:12px; border-bottom:1px solid var(--border); text-align:right; vertical-align:top; }
+    th { color: var(--muted); font-size:.82rem; }
+    tr:last-child td { border-bottom:0; }
+    .muted { color: var(--muted); font-size:.86rem; }
+    .status-ok { color: var(--ok); font-weight:700; }
+    .status-warn { color: var(--warn); font-weight:700; }
+    .status-danger { color: var(--danger); font-weight:800; }
+    .pill { display:inline-block; padding:3px 8px; border-radius:999px; color:#fff; font-size:.74rem; font-weight:700; }
+    .t-checkout { background:#1d4ed8; } .t-return { background:#15803d; } .t-consume { background:#6d28d9; } .t-lost { background:#b91c1c; } .t-damaged { background:#c2410c; }
+    .empty { padding:24px; text-align:center; color:var(--muted); border:1px dashed var(--border); border-radius:12px; margin-top:10px; }
+    .actions { margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+    .btn { text-decoration:none; color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:9px 12px; font-weight:600; }
+    @media (max-width: 860px) {
+      thead { display:none; }
+      table,tbody,tr,td { display:block; width:100%; }
+      tr { border-bottom:1px solid var(--border); }
+      td { position:relative; padding-right:44%; min-height:24px; }
+      td::before { content:attr(data-label); position:absolute; right:12px; color:var(--muted); font-weight:700; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="head">
+      <div>
+        <h1>تاریخچه ابزارهای من</h1>
+        <p class="sub">همه رویدادهای تحویل/بازگشت/خرابی مربوط به حساب شما</p>
+      </div>
+      <div class="chip">تعداد رکورد: {{ count }}</div>
+    </section>
+
+    {% if rows %}
+    <section class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>نوع</th><th>ابزار</th><th>کد/سریال</th><th>تاریخ</th><th>موعد</th><th>بازگشت</th><th>وضعیت</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td data-label="نوع"><span class="pill {% if r.type == 'checkout' %}t-checkout{% elif r.type == 'return' %}t-return{% elif r.type == 'consume' %}t-consume{% elif r.type == 'lost' %}t-lost{% elif r.type == 'damaged' %}t-damaged{% endif %}">{{ r.type_display }}</span></td>
+            <td data-label="ابزار"><strong>{{ r.item_name }}</strong></td>
+            <td data-label="کد/سریال"><div>{{ r.barcode }}</div><div class="muted">{{ r.serial }}</div></td>
+            <td data-label="تاریخ">{{ r.date_out|date:"Y-m-d H:i" }}</td>
+            <td data-label="موعد">{% if r.expected_return_date %}{{ r.expected_return_date|date:"Y-m-d" }}{% else %}<span class="muted">-</span>{% endif %}</td>
+            <td data-label="بازگشت">{% if r.returned_at %}{{ r.returned_at|date:"Y-m-d H:i" }}{% else %}<span class="muted">-</span>{% endif %}</td>
+            <td data-label="وضعیت">
+              {% if r.status_text == 'تحویل معوقه' %}<span class="status-danger">{{ r.status_text }}</span>
+              {% elif r.status_text == 'تحویل فعال' %}<span class="status-warn">{{ r.status_text }}</span>
+              {% else %}<span class="status-ok">{{ r.status_text }}</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% else %}
+      <section class="empty">هنوز رکوردی برای تاریخچه شما ثبت نشده است.</section>
+    {% endif %}
+
+    <section class="actions">
+      <a class="btn" href="/my-tools/">بازگشت به ابزارهای فعال</a>
+      <a class="btn" href="/accounts/logout/">خروج</a>
+    </section>
+  </main>
+</body>
+</html>

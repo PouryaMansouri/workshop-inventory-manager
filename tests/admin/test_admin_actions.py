@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.admin.sites import AdminSite
 from django.test import RequestFactory
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.core.files.uploadedfile import SimpleUploadedFile
 from apps.inventory.models import (
     Category, WorkshopUnit, UnitOfMeasure, Location, Product, ItemInstance
 )
@@ -109,16 +110,27 @@ class TestCheckoutAction:
         admin = setup_admin_test['admin']
         items = setup_admin_test['items'][:2]
         
-        # Mock form data
-        mock_request.POST = {
-            'user': setup_admin_test['staff_user'].id,
-            'expected_return_date': (timezone.now() + timedelta(days=7)).isoformat(),
-            'notes': 'Test checkout'
-        }
-        
-        # Execute action
         queryset = ItemInstance.objects.filter(id__in=[item.id for item in items])
         response = admin.checkout_selected_items(mock_request, queryset)
+        assert response.status_code == 302
+
+        ids = ",".join(str(item.id) for item in items)
+        factory = RequestFactory()
+        request = factory.post(
+            f'/admin/inventory/iteminstance/checkout-items/?ids={ids}',
+            data={
+                'user': setup_admin_test['staff_user'].id,
+                'expected_return_date': (timezone.now() + timedelta(days=7)).date().isoformat(),
+                'notes': 'Test checkout',
+            }
+        )
+        request.user = setup_admin_test['admin_user']
+        from django.contrib.sessions.middleware import SessionMiddleware
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        setattr(request, '_messages', FallbackStorage(request))
+        admin.checkout_items_view(request)
         
         # Verify items checked out
         for item in items:
@@ -140,17 +152,27 @@ class TestCheckoutAction:
         item.status = 'checked_out'
         item.save()
         
-        mock_request.POST = {
-            'user': setup_admin_test['staff_user'].id,
-            'expected_return_date': (timezone.now() + timedelta(days=7)).isoformat(),
-        }
-        
         queryset = ItemInstance.objects.filter(id=item.id)
         response = admin.checkout_selected_items(mock_request, queryset)
-        
-        # Should show error message (check via messages framework)
-        messages = list(mock_request._messages)
-        assert any('not available' in str(m).lower() for m in messages)
+        assert response.status_code == 302
+
+        request = RequestFactory().post(
+            f'/admin/inventory/iteminstance/checkout-items/?ids={item.id}',
+            data={
+                'user': setup_admin_test['staff_user'].id,
+                'expected_return_date': (timezone.now() + timedelta(days=7)).date().isoformat(),
+            }
+        )
+        request.user = setup_admin_test['admin_user']
+        from django.contrib.sessions.middleware import SessionMiddleware
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        setattr(request, '_messages', FallbackStorage(request))
+        admin.checkout_items_view(request)
+
+        messages = [str(m) for m in request._messages]
+        assert any('خطا' in m for m in messages)
 
 
 class TestReturnAction:
@@ -174,10 +196,22 @@ class TestReturnAction:
                 created_by=setup_admin_test['admin_user']
             )
         
-        mock_request.POST = {'notes': 'Returned in good condition'}
-        
         queryset = ItemInstance.objects.filter(id__in=[item.id for item in items])
         response = admin.return_selected_items(mock_request, queryset)
+        assert response.status_code == 302
+
+        ids = ",".join(str(item.id) for item in items)
+        request = RequestFactory().post(
+            f'/admin/inventory/iteminstance/return-items/?ids={ids}',
+            data={'notes': 'Returned in good condition'}
+        )
+        request.user = setup_admin_test['admin_user']
+        from django.contrib.sessions.middleware import SessionMiddleware
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        setattr(request, '_messages', FallbackStorage(request))
+        admin.return_items_view(request)
         
         # Verify items returned
         for item in items:
@@ -199,13 +233,21 @@ class TestMarkLostAction:
         admin = setup_admin_test['admin']
         item = setup_admin_test['items'][0]
         
-        mock_request.POST = {
-            'user': setup_admin_test['staff_user'].id,
-            'notes': 'Lost during field work'
-        }
-        
         queryset = ItemInstance.objects.filter(id=item.id)
         response = admin.mark_lost_selected(mock_request, queryset)
+        assert response.status_code == 302
+
+        request = RequestFactory().post(
+            f'/admin/inventory/iteminstance/mark-lost/?ids={item.id}',
+            data={'notes': 'Lost during field work'}
+        )
+        request.user = setup_admin_test['admin_user']
+        from django.contrib.sessions.middleware import SessionMiddleware
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        setattr(request, '_messages', FallbackStorage(request))
+        admin.mark_lost_view(request)
         
         # Verify item marked as lost
         item.refresh_from_db()
@@ -226,13 +268,21 @@ class TestMarkDamagedAction:
         admin = setup_admin_test['admin']
         item = setup_admin_test['items'][0]
         
-        mock_request.POST = {
-            'user': setup_admin_test['staff_user'].id,
-            'notes': 'Dropped from height'
-        }
-        
         queryset = ItemInstance.objects.filter(id=item.id)
         response = admin.mark_damaged_selected(mock_request, queryset)
+        assert response.status_code == 302
+
+        request = RequestFactory().post(
+            f'/admin/inventory/iteminstance/mark-damaged/?ids={item.id}',
+            data={'notes': 'Dropped from height'}
+        )
+        request.user = setup_admin_test['admin_user']
+        from django.contrib.sessions.middleware import SessionMiddleware
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        setattr(request, '_messages', FallbackStorage(request))
+        admin.mark_damaged_view(request)
         
         # Verify item marked as damaged
         item.refresh_from_db()
@@ -253,10 +303,21 @@ class TestMaintenanceAction:
         admin = setup_admin_test['admin']
         item = setup_admin_test['items'][0]
         
-        mock_request.POST = {'description': 'Needs calibration'}
-        
         queryset = ItemInstance.objects.filter(id=item.id)
         response = admin.report_maintenance_selected(mock_request, queryset)
+        assert response.status_code == 302
+
+        request = RequestFactory().post(
+            f'/admin/inventory/iteminstance/report-maintenance/?ids={item.id}',
+            data={'description': 'Needs calibration'}
+        )
+        request.user = setup_admin_test['admin_user']
+        from django.contrib.sessions.middleware import SessionMiddleware
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        setattr(request, '_messages', FallbackStorage(request))
+        admin.report_maintenance_view(request)
         
         # Verify item status changed
         item.refresh_from_db()
@@ -281,10 +342,22 @@ class TestLocationChangeAction:
         # Create new location
         new_location = Location.objects.create(name='Shelf A')
         
-        mock_request.POST = {'location': new_location.id}
-        
         queryset = ItemInstance.objects.filter(id__in=[item.id for item in items])
         response = admin.change_location_selected(mock_request, queryset)
+        assert response.status_code == 302
+
+        ids = ",".join(str(item.id) for item in items)
+        request = RequestFactory().post(
+            f'/admin/inventory/iteminstance/change-location/?ids={ids}',
+            data={'location': new_location.id}
+        )
+        request.user = setup_admin_test['admin_user']
+        from django.contrib.sessions.middleware import SessionMiddleware
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        setattr(request, '_messages', FallbackStorage(request))
+        admin.change_location_view(request)
         
         # Verify location changed
         for item in items:
@@ -325,17 +398,27 @@ class TestCSVImportAction:
         location = setup_admin_test['location']
         
         # Create CSV content
-        from io import BytesIO
         csv_content = f"""product_sku,serial_number,location
 {product.sku_code},CSV-001,{location.name}
 {product.sku_code},CSV-002,{location.name}"""
-        
-        csv_file = BytesIO(csv_content.encode('utf-8'))
-        csv_file.name = 'test.csv'
-        
-        mock_request.FILES = {'csv_file': csv_file}
-        
-        response = admin.import_from_csv(mock_request, ItemInstance.objects.none())
+
+        csv_file = SimpleUploadedFile(
+            "test.csv",
+            csv_content.encode("utf-8"),
+            content_type="text/csv",
+        )
+        request = RequestFactory().post(
+            '/admin/inventory/iteminstance/import-from-csv/',
+            data={'csv_file': csv_file}
+        )
+        request.user = setup_admin_test['admin_user']
+        from django.contrib.sessions.middleware import SessionMiddleware
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        setattr(request, '_messages', FallbackStorage(request))
+
+        response = admin.import_from_csv(request, ItemInstance.objects.none())
         
         # Verify items created
         assert ItemInstance.objects.filter(serial_number__startswith='CSV-').count() == 2

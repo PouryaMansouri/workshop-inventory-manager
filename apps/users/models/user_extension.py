@@ -21,7 +21,6 @@ class UserExtension(models.Model):
     )
     phone_number = models.CharField(
         max_length=20,
-        blank=True,
         verbose_name='شماره تلفن',
         help_text='شماره تلفن کاربر'
     )

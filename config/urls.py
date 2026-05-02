@@ -2,20 +2,21 @@
 URL configuration for Workshop Tool Inventory System.
 """
 from django.contrib import admin
-from django.urls import path
+from django.contrib.auth import views as auth_views
+from django.urls import path, include
+from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
-
-# Customize admin site
-admin.site.site_header = 'سیستم مدیریت ابزار کارگاه'
-admin.site.site_title = 'مدیریت ابزار'
-admin.site.index_title = 'داشبورد مدیریت'
-
-# Override admin index template
-admin.site.index_template = 'admin/index.html'
+from apps.dashboard.admin import dashboard_admin_site
+from apps.dashboard.views import my_tools_view, my_tools_history_view
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('', RedirectView.as_view(url='/my-tools/', permanent=False), name='root_redirect'),
+    path('admin/', dashboard_admin_site.urls),
+    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('my-tools/', my_tools_view, name='my_tools'),
+    path('my-tools/history/', my_tools_history_view, name='my_tools_history'),
 ]
 
 # Serve media files in development

@@ -25,27 +25,27 @@ class DashboardWidgets:
         from apps.inventory.models import Product
         
         products = Product.objects.annotate(
-            current_stock=Count(
+            available_stock=Count(
                 'iteminstance',
                 filter=Q(iteminstance__status='available')
             )
         ).filter(
-            current_stock__lt=F('minimum_stock')
+            available_stock__lt=F('minimum_stock')
         ).select_related(
             'category',
             'workshop_unit'
-        ).order_by('current_stock')[:limit]
+        ).order_by('available_stock')[:limit]
         
         return [
             {
                 'id': p.id,
                 'name': p.name,
                 'sku': p.sku_code,
-                'current_stock': p.current_stock,
+                'current_stock': p.available_stock,
                 'minimum_stock': p.minimum_stock,
                 'category': p.category.name,
                 'workshop': p.workshop_unit.name,
-                'is_critical': p.current_stock == 0,
+                'is_critical': p.available_stock == 0,
             }
             for p in products
         ]
