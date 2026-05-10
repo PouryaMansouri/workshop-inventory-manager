@@ -5,9 +5,21 @@ echo "Starting Workshop Tool Inventory System..."
 
 # Wait for database to be ready
 echo "Waiting for database..."
-while ! nc -z db 5432; do
-  sleep 0.1
-done
+python - <<'PY'
+import socket
+import time
+import os
+
+host = os.getenv("POSTGRES_HOST", "db")
+port = int(os.getenv("POSTGRES_PORT", "5432"))
+
+while True:
+    try:
+        with socket.create_connection((host, port), timeout=1):
+            break
+    except OSError:
+        time.sleep(0.2)
+PY
 echo "Database is ready!"
 
 # Run migrations
