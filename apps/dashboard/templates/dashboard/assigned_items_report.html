@@ -1,0 +1,49 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}گزارش اقلام تجویلی{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+  .f { display: flex; flex-direction: column; gap: 4px; }
+  select, input { min-width: 180px; padding: 8px; border: 1px solid #cdd7e6; border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h1 style="margin:0;">گزارش اقلام تجویلی</h1>
+  <p class="muted" style="margin:6px 0 0;">وضعیت نگهداری اقلام، بازه‌ها و آخرین تایید دوره‌ای</p>
+</section>
+
+<section class="card">
+  <form method="get">
+    <div class="row">
+      <div class="f"><label>شخص</label><select name="holder_id"><option value="">همه</option>{% for h in holders %}{% with full=h.get_full_name %}<option value="{{ h.id }}" {% if filters.holder_id == h.id|stringformat:"s" %}selected{% endif %}>{{ full|default:h.username }}</option>{% endwith %}{% endfor %}</select></div>
+      <div class="f"><label>واحد</label><select name="workshop_unit_id"><option value="">همه</option>{% for w in workshop_units %}<option value="{{ w.id }}" {% if filters.workshop_unit_id == w.id|stringformat:"s" %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
+      <div class="f"><label>وضعیت</label><select name="active"><option value="" {% if not filters.active %}selected{% endif %}>همه</option><option value="1" {% if filters.active == "1" %}selected{% endif %}>فعال</option><option value="0" {% if filters.active == "0" %}selected{% endif %}>بسته</option></select></div>
+      <div class="f"><label>از تاریخ</label><input type="date" name="start_date" value="{{ filters.start_date }}"></div>
+      <div class="f"><label>تا تاریخ</label><input type="date" name="end_date" value="{{ filters.end_date }}"></div>
+      <button class="btn" type="submit">اعمال فیلتر</button>
+      <a class="btn" href="{% url 'assigned_items_report_export_xlsx' %}?holder_id={{ filters.holder_id }}&workshop_unit_id={{ filters.workshop_unit_id }}&active={{ filters.active }}&start_date={{ filters.start_date }}&end_date={{ filters.end_date }}">خروجی اکسل</a>
+    </div>
+  </form>
+  <div class="muted" style="margin-top:10px;">تعداد رکورد: {{ count }}</div>
+</section>
+
+<section class="card">
+  <table>
+    <thead><tr><th>شخص</th><th>واحد</th><th>کالا</th><th>کد</th><th>سریال</th><th>شروع بازه</th><th>پایان بازه</th><th>آخرین تاییدکننده</th><th>آخرین تایید</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td data-label="شخص">{{ r.holder_name }}</td><td data-label="واحد">{{ r.workshop_unit }}</td><td data-label="کالا">{{ r.item_name }}</td><td data-label="کد">{{ r.code }}</td><td data-label="سریال">{{ r.serial }}</td>
+        <td data-label="شروع بازه">{{ r.holding_range_start|date:"Y-m-d H:i" }}</td>
+        <td data-label="پایان بازه">{{ r.holding_range_end|date:"Y-m-d H:i" }} {% if r.is_active %}<span class="ok">(فعال)</span>{% endif %}</td>
+        <td data-label="آخرین تاییدکننده">{{ r.last_check_by|default:"-" }}</td><td data-label="آخرین تایید">{{ r.last_check_at|date:"Y-m-d H:i"|default:"-" }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="9" class="muted">رکوردی یافت نشد.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

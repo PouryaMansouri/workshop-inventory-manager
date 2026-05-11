@@ -1,0 +1,28 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}خانه - فناوران سپهران موتور{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h1 style="margin:0 0 8px;">خانه سامانه</h1>
+  <p class="muted" style="margin:0; line-height:1.9;">
+    این صفحه نقطه شروع سامانه است. با توجه به سطح دسترسی شما، منوی بالا فقط مسیرهای مجاز را نمایش می‌دهد.
+    برای عملیات روزانه از دکمه‌های بالا استفاده کنید.
+  </p>
+</section>
+
+<section class="card">
+  <h2 style="margin:0 0 10px; font-size:1.05rem;">راهنمای مسیرها</h2>
+  <table>
+    <thead>
+      <tr><th>صفحه</th><th>کاربرد</th><th>مسیر</th></tr>
+    </thead>
+    <tbody>
+      <tr><td data-label="صفحه">ابزارهای فعال من</td><td data-label="کاربرد">اقلامی که الان در اختیار شماست</td><td data-label="مسیر"><code>/my-tools/</code></td></tr>
+      <tr><td data-label="صفحه">تاریخچه ابزارهای من</td><td data-label="کاربرد">سوابق کامل تحویل/بازگشت</td><td data-label="مسیر"><code>/my-tools/history/</code></td></tr>
+      <tr><td data-label="صفحه">گزارش اقلام تجویلی</td><td data-label="کاربرد">رصد بازه نگهداری و تایید دوره‌ای</td><td data-label="مسیر"><code>/reports/assigned-items/</code></td></tr>
+      <tr><td data-label="صفحه">جستجوی ابزارهای افراد</td><td data-label="کاربرد">استعلام با موبایل/کد پرسنلی</td><td data-label="مسیر"><code>/reports/holder-tools/</code></td></tr>
+    </tbody>
+  </table>
+</section>
+{% endblock %}

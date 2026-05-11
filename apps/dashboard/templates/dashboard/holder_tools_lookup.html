@@ -1,0 +1,175 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}جستجوی ابزارهای در اختیار فرد{% endblock %}
+
+{% block extra_styles %}
+<style>
+  input { min-width: 320px; padding: 9px; border: 1px solid #cdd7e6; border-radius: 8px; }
+  textarea { min-width: 320px; min-height: 90px; padding: 9px; border: 1px solid #cdd7e6; border-radius: 8px; }
+  .confirm-tools { margin-top: 12px; display: grid; gap: 10px; }
+  .confirm-row {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #d7e2f1;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fbfdff 0%, #f3f8ff 100%);
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+  }
+  .confirm-row:hover {
+    border-color: #b8ccea;
+    box-shadow: 0 6px 18px rgba(20, 49, 88, .08);
+    transform: translateY(-1px);
+  }
+  .confirm-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--brand);
+  }
+  .confirm-row input[type="checkbox"]:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+  .confirm-main { font-weight: 700; color: #243042; }
+  .confirm-sub { margin-top: 4px; font-size: .84rem; color: var(--muted); }
+  .confirm-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .confirm-title { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .tiny { font-size: .86rem; color: var(--muted); }
+  .history-list { margin: 6px 0 0; padding: 0 18px 0 0; }
+  .history-list li { margin-bottom: 4px; }
+  @media (max-width: 800px) { input { min-width: 100%; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h1 style="margin:0;">جستجوی ابزارهای در اختیار فرد</h1>
+  <p class="muted" style="margin:6px 0 0;">جستجو با شماره موبایل یا کد پرسنلی</p>
+</section>
+
+<section class="card">
+  <form method="get">
+    <label for="q">شماره موبایل یا کد پرسنلی</label>
+    <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <input id="q" name="q" value="{{ query }}" placeholder="مثال: 0912... یا WRK-001" />
+      <button class="btn" type="submit">جستجو</button>
+    </div>
+  </form>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  {% if success %}<p class="ok">{{ success }}</p>{% endif %}
+  {% if holder %}<p class="ok">کاربر: {{ holder.get_full_name|default:holder.username }} | تعداد ابزار فعال: {{ count }}</p>{% endif %}
+</section>
+
+{% if holder %}
+<section class="card">
+  <div class="confirm-title">
+    <h2 style="margin:0; font-size:1.05rem;">ثبت تایید دوره‌ای از همین صفحه</h2>
+    <div class="confirm-actions">
+      <button class="btn" type="button" onclick="setSelectionEnabled(true)">فعال‌سازی انتخاب</button>
+      <button class="btn" type="button" onclick="toggleAllChecks(true)">انتخاب همه</button>
+      <button class="btn" type="button" onclick="toggleAllChecks(false)">لغو انتخاب همه</button>
+    </div>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="q" value="{{ query }}">
+    <div class="confirm-tools">
+      {% for r in rows %}
+        <label class="confirm-row">
+          <input class="confirm-check" type="checkbox" name="selected_txn_ids" value="{{ r.transaction_id }}" disabled>
+          <span>
+            <div class="confirm-main">{{ r.item_name }}</div>
+            <div class="confirm-sub">{{ r.barcode }} | سریال: {{ r.serial }} | تحویل: {{ r.date_out|date:"Y-m-d H:i" }}</div>
+          </span>
+        </label>
+      {% empty %}
+        <div class="muted">ابزار فعالی برای تایید وجود ندارد.</div>
+      {% endfor %}
+    </div>
+    <div style="margin-top:10px;">
+      <label for="notes">یادداشت تایید</label>
+      <textarea id="notes" name="notes" placeholder="توضیحات اختیاری..."></textarea>
+    </div>
+    <div style="margin-top:10px;">
+      <button class="btn" type="submit">ثبت تایید انتخاب‌شده‌ها</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <table>
+    <thead><tr><th>شناسه تحویل</th><th>نام ابزار</th><th>بارکد</th><th>سریال</th><th>تاریخ تحویل</th><th>موعد بازگشت</th><th>آخرین تاییدکننده</th><th>آخرین تایید</th><th>یادداشت قبلی</th><th>وضعیت</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td data-label="شناسه تحویل">{{ r.transaction_id }}</td><td data-label="نام ابزار">{{ r.item_name }}</td><td data-label="بارکد">{{ r.barcode }}</td><td data-label="سریال">{{ r.serial }}</td>
+        <td data-label="تاریخ تحویل">{{ r.date_out|date:"Y-m-d H:i" }}</td><td data-label="موعد بازگشت">{{ r.expected_return_date|date:"Y-m-d"|default:"-" }}</td>
+        <td data-label="آخرین تاییدکننده">{{ r.last_check_by }}</td>
+        <td data-label="آخرین تایید">{% if r.last_check_at %}{{ r.last_check_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
+        <td data-label="یادداشت قبلی">{{ r.last_check_notes }}</td>
+        <td data-label="وضعیت">{% if r.is_overdue %}<span class="error">معوقه</span>{% else %}<span class="muted">فعال</span>{% endif %}</td>
+      </tr>
+      <tr>
+        <td colspan="10" class="tiny" style="background:#fbfdff;">
+          <strong>هیستوری تایید این کالا:</strong>
+          {% if r.check_history %}
+            <ul class="history-list">
+              {% for h in r.check_history %}
+                <li>{{ h.confirmed_at|date:"Y-m-d H:i" }} | {{ h.confirmed_by }} | {{ h.notes }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <span class="muted">تا الان تاییدی ثبت نشده است.</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}<tr><td colspan="10" class="muted">ابزار فعالی در اختیار این فرد نیست.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2 style="margin:0 0 10px; font-size:1.05rem;">هیستوری کامل تاییدهای این فرد</h2>
+  <table>
+    <thead><tr><th>شناسه تحویل</th><th>کالا</th><th>بارکد</th><th>تاییدکننده</th><th>زمان تایید</th><th>یادداشت</th></tr></thead>
+    <tbody>
+      {% for h in confirmation_history_rows %}
+      <tr>
+        <td data-label="شناسه تحویل">{{ h.transaction_id }}</td>
+        <td data-label="کالا">{{ h.item_name }}</td>
+        <td data-label="بارکد">{{ h.barcode }}</td>
+        <td data-label="تاییدکننده">{{ h.confirmed_by }}</td>
+        <td data-label="زمان تایید">{{ h.confirmed_at|date:"Y-m-d H:i" }}</td>
+        <td data-label="یادداشت">{{ h.notes }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="muted">هیستوری تاییدی برای این فرد ثبت نشده است.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function setSelectionEnabled(enabled) {
+    document.querySelectorAll('.confirm-check').forEach(function (el) {
+      el.disabled = !enabled;
+      if (!enabled) {
+        el.checked = false;
+      }
+    });
+  }
+
+  function toggleAllChecks(checked) {
+    document.querySelectorAll('.confirm-check').forEach(function (el) {
+      if (!el.disabled) {
+        el.checked = checked;
+      }
+    });
+  }
+</script>
+{% endblock %}

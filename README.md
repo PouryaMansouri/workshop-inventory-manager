@@ -17,6 +17,7 @@
 - 📈 **داشبورد**: نمایش آماری لحظه‌ای با 6 کارت متریک و ویجت‌های تحلیلی
 - 🏷️ **بارکد**: تولید خودکار بارکد و برچسب PDF
 - 📥 **ایمپورت CSV**: ورود انبوه داده‌ها
+- 📗 **Bootstrap اکسل واقعی**: ایمپورت مستقیم از فایل‌های `real_docs/*.xlsx`
 - 🔐 **امنیت**: کنترل دسترسی، audit logging، اعتبارسنجی ورودی
 - 🌐 **فارسی**: رابط کاربری کامل فارسی با RTL layout
 - 🐳 **Docker**: آماده استقرار با docker-compose
@@ -29,7 +30,6 @@
 
 - Python 3.11+
 - PostgreSQL 15+ (برای production)
-- Redis 7+ (اختیاری، برای caching)
 
 ### نصب و راه‌اندازی
 
@@ -61,26 +61,27 @@ python seed_data.py
 DJANGO_SETTINGS_MODULE=config.settings.local python manage.py runserver
 ```
 
-سپس به آدرس http://127.0.0.1:8000/admin/ بروید.
+سپس به آدرس http://127.0.0.1:8011/admin/ بروید.
 
 ---
 
 ## 👤 اکانت‌های تستی
 
-پس از اجرای `seed_data.py`، اکانت‌ها و اطلاعات تکمیلی زیر ایجاد می‌شوند:
+پس از اجرای `seed_data.py` (اکنون مبتنی بر `real_docs/*.xlsx`)، اکانت‌ها و اطلاعات تکمیلی زیر ایجاد می‌شوند:
 
-| نقش | Username | Password | Phone | Personnel Code | Department |
+| نقش | Username (Mobile) | Password | Phone | Personnel Code | Department |
 |-----|----------|----------|-------|----------------|------------|
-| Superuser | `admin` | `admin123` | `09120000001` | `ADM-001` | فناوری اطلاعات |
-| Manager | `manager` | `manager123` | `09120000002` | `MNG-001` | انبار |
-| Operator | `operator` | `operator123` | `09120000003` | `OPR-001` | عملیات |
-| Worker | `ali_rezaei` | `worker123` | `09120000004` | `WRK-001` | تعمیرگاه مکانیک |
-| Worker | `sara_ahmadi` | `worker123` | `09120000005` | `WRK-002` | تعمیرگاه برق |
-| Worker | `reza_karimi` | `worker123` | `09120000006` | `WRK-003` | تعمیرگاه خنک‌کاری |
+| Superuser | `09120000001` | `admin123` | `09120000001` | `ADM-001` | فناوری اطلاعات |
+| Manager | `09120000002` | `manager123` | `09120000002` | `MNG-001` | انبار |
+| Operator | `09120000003` | `operator123` | `09120000003` | `OPR-001` | عملیات |
+| Worker | `09120000004` | `worker123` | `09120000004` | `WRK-001` | تعمیرگاه مکانیک |
+| Worker | `09120000005` | `worker123` | `09120000005` | `WRK-002` | تعمیرگاه برق |
+| Worker | `09120000006` | `worker123` | `09120000006` | `WRK-003` | تعمیرگاه خنک‌کاری |
 
 نکات:
+- `username` دقیقاً برابر شماره موبایل کاربر ساخته/به‌روزرسانی می‌شود.
 - `email` برای کاربران اجباری نیست.
-- `phone_number` در اطلاعات تکمیلی اجباری است.
+- `phone_number` و `personnel_code` در اطلاعات تکمیلی ثبت می‌شوند.
 
 ---
 
@@ -99,7 +100,7 @@ docker compose up -d
 docker compose exec web python manage.py createsuperuser
 
 # 4. دسترسی به برنامه
-# http://localhost:8000/admin/
+# http://localhost:8010/admin/
 ```
 
 ---
@@ -180,6 +181,83 @@ anbar/
 - فیلتر معوق‌ها (overdue, due soon, on time)
 - Autocomplete برای foreign keys
 
+### 7. Real Excel Bootstrap + Assigned Items Report
+- ریست کامل داده‌های عملیاتی و بارگذاری مجدد از اکسل‌های واقعی:
+  - `real_docs/categories-instrument.xlsx`
+  - `real_docs/categories-equipment.xlsx`
+  - `real_docs/example.xlsx`
+  - `real_docs/coding.xlsx`
+  - `real_docs/نمونه لیست اقلام تجویلی.xlsx`
+- دستور اجرا:
+```bash
+DJANGO_SETTINGS_MODULE=config.settings.local python manage.py import_real_docs --path real_docs
+```
+- Seed کامل تستی (شامل import اکسل + ساخت کاربران تست + تراکنش‌های تست):
+```bash
+DJANGO_SETTINGS_MODULE=config.settings.local python seed_data.py
+```
+- گزارش اقلام تجویلی:
+  - مسیر: `/reports/assigned-items/`
+  - خروجی اکسل: `/reports/assigned-items/export.xlsx`
+- جستجوی ابزارهای در اختیار یک فرد (با موبایل/کد پرسنلی):
+  - مسیر: `/reports/holder-tools/`
+- ثبت تایید چک ابزارها:
+  - در پنل ItemInstance اکشن `ثبت تایید چک برای ابزارهای انتخاب شده`
+
+### 8. تست دستی صفحات
+- اجرای سرور لوکال:
+```bash
+DJANGO_SETTINGS_MODULE=config.settings.local python manage.py runserver 0.0.0.0:8011
+```
+- ورود ادمین:
+  - URL: `http://127.0.0.1:8011/admin/`
+  - Username: `09120000001`
+  - Password: `admin123`
+- صفحات اصلی برای تست:
+  - گزارش اقلام تجویلی: `http://127.0.0.1:8011/reports/assigned-items/`
+  - جستجوی ابزارهای در اختیار فرد: `http://127.0.0.1:8011/reports/holder-tools/`
+- نمونه ورودی برای جستجو در صفحه holder-tools:
+  - موبایل: `09120000004`
+  - کد پرسنلی: `WRK-001`
+
+### 9. فرآیند تایید دوره‌ای (Periodic Check)
+
+- هدف: برای کالاهای تجویلی/تحویلی، به‌جای بازگشت فیزیکی کالا، فقط در دوره‌های مشخص تایید شود که همان کالا با همان کد هنوز نزد همان فرد است.
+- مدل داده: تاییدها در جدول `ItemCheckConfirmation` ثبت می‌شود.
+- صفحه‌ها و آدرس‌ها:
+  - گزارش اقلام تحویلی: `/reports/assigned-items/`
+  - خروجی اکسل همان گزارش: `/reports/assigned-items/export.xlsx`
+  - جستجوی ابزارهای یک فرد: `/reports/holder-tools/`
+  - فرم ثبت تایید چک (از داخل ادمین): `/admin/inventory/iteminstance/` → انتخاب ابزارها → اکشن `ثبت تایید چک برای ابزارهای انتخاب شده`
+
+- چه کسی می‌تواند تایید کند؟
+  - در وضعیت فعلی، ثبت تایید از مسیر Django Admin انجام می‌شود؛ بنابراین کاربر باید دسترسی ورود به Admin داشته باشد (عملاً `is_staff=True`).
+  - ثبت‌کننده تایید در فیلد `confirmed_by` ذخیره می‌شود.
+
+- چه دسترسی‌هایی لازم است؟
+  - مشاهده داشبوردهای کاربری و گزارش‌های `/reports/*`: فقط نیازمند Login (در کد فعلی `login_required`).
+  - ثبت تایید دوره‌ای: دسترسی به پنل Admin و دسترسی مدل `ItemInstance`.
+
+- هیستوری و رهگیری:
+  - آخرین تایید هر ابزار در گزارش اقلام تحویلی نمایش داده می‌شود (`last_check_by`, `last_check_at`).
+  - تاریخچه کامل تاییدها از Admin مدل `ItemCheckConfirmation` قابل پیگیری است.
+  - تاریخچه کامل تغییرات مدل‌ها نیز با `django-simple-history` ثبت می‌شود.
+
+- وضعیت فعلی نسبت به نیاز «یک صفحه واحد برای تایید دوره‌ای»:
+  - در نسخه فعلی، گزارش و ثبت تایید در دو نقطه جدا هستند (Reports + Admin Action).
+  - برای تجربه بهتر عملیاتی، پیشنهاد می‌شود یک صفحه واحد عملیاتی ساخته شود که لیست اقلام فعال + فیلتر بازه + ثبت تایید گروهی را یکجا داشته باشد.
+
+### 10. سیاست کد یونیک کالا
+
+- فرمت فعلی کد ابزار: `barcode = {product.sku_code}-{serial_number}`
+- مثال: اگر `sku_code=2ME02002` و `serial_number=001` باشد، بارکد نهایی می‌شود `2ME02002-001`.
+- یکتایی:
+  - `barcode` در کل سیستم یکتا است (`unique=True`).
+  - `serial_number` برای هر `product` یکتا است (`UniqueConstraint(product, serial_number)`).
+- ظرفیت اعداد بالا:
+  - از نظر قالب، محدودیت 3 رقمی وجود ندارد و `serial_number` رشته‌ای با `max_length=100` است؛ بنابراین `001` تا اعداد بسیار بزرگ پشتیبانی می‌شود.
+  - طول کل `barcode` نیز تا `max_length=200` پشتیبانی می‌شود.
+
 ---
 
 ## 🧪 تست‌ها
@@ -214,7 +292,7 @@ pytest tests/ --cov=apps --cov=core --cov-report=html
 ### Stack
 - **Backend**: Django 5.0.1
 - **Database**: PostgreSQL 15 (SQLite برای تست)
-- **Cache**: Redis 7
+- **Cache**: LocMemCache
 - **Server**: Gunicorn با 4 worker
 - **Audit**: django-simple-history
 - **Barcode**: python-barcode + Pillow

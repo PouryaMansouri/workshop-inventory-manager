@@ -1,5 +1,13 @@
 /* Custom CSS for Workshop Tool Inventory Admin */
 
+:root {
+    --sm-green: #17b394;
+    --sm-red: #e6272f;
+    --sm-silver: #9096a0;
+    --sm-charcoal: #454b55;
+    --sm-surface: #ffffff;
+}
+
 /* RTL Layout */
 body {
     direction: rtl;
@@ -9,6 +17,28 @@ body {
 /* Adjust admin header */
 #header {
     direction: rtl;
+    background: linear-gradient(90deg, #f7f9fc 0%, #edf2f8 100%);
+    border-bottom: 3px solid var(--sm-silver);
+}
+
+#branding h1,
+#branding h1 a:link,
+#branding h1 a:visited {
+    color: var(--sm-charcoal);
+    font-weight: 800;
+}
+
+#header a:link,
+#header a:visited {
+    color: #2f3a46;
+}
+
+#header a:hover {
+    color: var(--sm-red);
+}
+
+#user-tools {
+    color: #5e6673;
 }
 
 /* Adjust breadcrumbs */
@@ -47,7 +77,7 @@ body {
 }
 
 .status-checked-out {
-    background-color: #007bff;
+    background: linear-gradient(135deg, #1f8e7b 0%, #17b394 100%);
 }
 
 .status-maintenance {
@@ -55,7 +85,7 @@ body {
 }
 
 .status-lost {
-    background-color: #dc3545;
+    background: linear-gradient(135deg, #f04b52 0%, #e6272f 100%);
 }
 
 .status-damaged {
@@ -64,12 +94,12 @@ body {
 
 /* Low stock warning */
 .low-stock {
-    color: #dc3545;
+    color: var(--sm-red);
     font-weight: bold;
 }
 
 /* Overdue warning */
 .overdue {
-    color: #dc3545;
+    color: var(--sm-red);
     font-weight: bold;
 }

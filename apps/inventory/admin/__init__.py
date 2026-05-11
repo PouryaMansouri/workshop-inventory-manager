@@ -8,6 +8,7 @@ from apps.inventory.models import (
     UnitOfMeasure,
     Location,
     Product,
+    ItemCheckConfirmation,
 )
 from .item_instance_admin import ItemInstanceAdmin
 
@@ -155,3 +156,21 @@ class ProductAdmin(admin.ModelAdmin):
                 'padding: 3px 10px; border-radius: 3px;">موجودی کافی</span>'
             )
     stock_status.short_description = 'وضعیت موجودی'
+
+
+@admin.register(ItemCheckConfirmation)
+class ItemCheckConfirmationAdmin(admin.ModelAdmin):
+    list_display = ['item', 'checkout_transaction', 'confirmed_by', 'confirmed_at', 'notes']
+    list_filter = ['confirmed_at', 'confirmed_by', 'checkout_transaction']
+    search_fields = [
+        'item__barcode',
+        'item__serial_number',
+        'item__product__name',
+        'checkout_transaction__id',
+        'confirmed_by__username',
+        'confirmed_by__first_name',
+        'confirmed_by__last_name',
+        'notes',
+    ]
+    autocomplete_fields = ['item', 'confirmed_by', 'checkout_transaction']
+    readonly_fields = ['confirmed_at']

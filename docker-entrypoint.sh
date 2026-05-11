@@ -30,6 +30,12 @@ python manage.py migrate --noinput
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
+# Optional seed on startup (for dev/staging bootstrap)
+if [ "${RUN_SEED_ON_START:-False}" = "True" ]; then
+  echo "RUN_SEED_ON_START=True -> seeding database..."
+  python seed_data.py
+fi
+
 # Create logs directory
 mkdir -p /app/logs
 

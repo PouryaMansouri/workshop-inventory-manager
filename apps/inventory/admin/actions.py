@@ -13,6 +13,7 @@ from apps.inventory.forms import (
     LocationChangeForm,
     MaintenanceReportForm,
     MarkLostDamagedForm,
+    CheckConfirmationForm,
 )
 
 
@@ -52,6 +53,11 @@ class InventoryActionsMixin:
                 'mark-damaged/',
                 self.admin_site.admin_view(self.mark_damaged_view),
                 name='inventory_iteminstance_mark_damaged',
+            ),
+            path(
+                'confirm-check/',
+                self.admin_site.admin_view(self.confirm_check_view),
+                name='inventory_iteminstance_confirm_check',
             ),
         ]
         return custom_urls + urls
@@ -376,5 +382,80 @@ class InventoryActionsMixin:
             'title': 'ثبت به عنوان خراب',
             'opts': self.model._meta,
         }
-        
+
         return render(request, 'admin/inventory/mark_damaged_form.html', context)
+
+    @admin.action(description='ثبت تایید چک برای ابزارهای انتخاب شده')
+    def confirm_check_selected(self, request, queryset):
+        """Open bulk check confirmation form."""
+        selected = queryset.values_list('pk', flat=True)
+        return HttpResponseRedirect(
+            f'confirm-check/?ids={",".join(str(pk) for pk in selected)}'
+        )
+
+    def confirm_check_view(self, request):
+        """View for creating check confirmations."""
+        from apps.transactions.models import Transaction
+        from apps.inventory.models import ItemCheckConfirmation
+
+        ids = request.GET.get('ids', '').split(',')
+        items = self.model.objects.filter(pk__in=ids)
+        active_checkouts = {
+            tx.item_id: tx
+            for tx in Transaction.objects.filter(
+                item_id__in=items.values_list('id', flat=True),
+                transaction_type='checkout',
+                returned_at__isnull=True,
+            ).select_related('item', 'user')
+        }
+        eligible_items = [item for item in items if item.id in active_checkouts]
+
+        if request.method == 'POST':
+            form = CheckConfirmationForm(request.POST)
+            if form.is_valid():
+                notes = form.cleaned_data['notes']
+                confirmations = []
+                for item in eligible_items:
+                    confirmations.append(
+                        ItemCheckConfirmation(
+                            item=item,
+                            confirmed_by=request.user,
+                            checkout_transaction=active_checkouts[item.id],
+                            notes=notes,
+                        )
+                    )
+
+                skipped = len(items) - len(eligible_items)
+                if not confirmations:
+                    self.message_user(
+                        request,
+                        'هیچ ابزار واجد شرایطی برای تایید وجود ندارد. تایید فقط برای ابزارهای با تحویل فعال ثبت می‌شود.',
+                        messages.ERROR,
+                    )
+                    return redirect('..')
+
+                ItemCheckConfirmation.objects.bulk_create(confirmations)
+                self.message_user(
+                    request,
+                    f'تایید چک برای {len(confirmations)} ابزار ثبت شد.',
+                    messages.SUCCESS
+                )
+                if skipped > 0:
+                    self.message_user(
+                        request,
+                        f'{skipped} ابزار به‌دلیل نداشتن تحویل فعال از تایید حذف شد.',
+                        messages.WARNING,
+                    )
+                return redirect('..')
+        else:
+            form = CheckConfirmationForm()
+
+        context = {
+            'form': form,
+            'items': items,
+            'eligible_items': eligible_items,
+            'ineligible_count': len(items) - len(eligible_items),
+            'title': 'ثبت تایید چک ابزارها',
+            'opts': self.model._meta,
+        }
+        return render(request, 'admin/inventory/check_confirmation_form.html', context)

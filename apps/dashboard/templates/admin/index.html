@@ -50,17 +50,17 @@
     --db-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
     --db-radius: 16px;
 
-    --s1: linear-gradient(135deg, #0f766e 0%, #0ea5a4 100%);
-    --s2: linear-gradient(135deg, #c2410c 0%, #fb923c 100%);
-    --s3: linear-gradient(135deg, #1d4ed8 0%, #60a5fa 100%);
-    --s4: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
-    --s5: linear-gradient(135deg, #0f766e 0%, #22c55e 100%);
-    --s6: linear-gradient(135deg, #be123c 0%, #fb7185 100%);
+    --s1: linear-gradient(135deg, #17b394 0%, #1fd3b0 100%);
+    --s2: linear-gradient(135deg, #8b919b 0%, #c0c5cd 100%);
+    --s3: linear-gradient(135deg, #0f9b82 0%, #17b394 100%);
+    --s4: linear-gradient(135deg, #656d79 0%, #949ca8 100%);
+    --s5: linear-gradient(135deg, #208f78 0%, #17b394 100%);
+    --s6: linear-gradient(135deg, #d7353d 0%, #e6272f 100%);
 
-    --w-danger: #b91c1c;
-    --w-warn: #c2410c;
-    --w-info: #1d4ed8;
-    --w-success: #15803d;
+    --w-danger: #e6272f;
+    --w-warn: #6f7785;
+    --w-info: #0f9b82;
+    --w-success: #17b394;
 
     --db-head-bg: rgba(255, 255, 255, 0.72);
     --db-head-border: rgba(148, 163, 184, 0.28);
@@ -94,6 +94,19 @@
     background: var(--db-head-bg);
     border: 1px solid var(--db-head-border);
     backdrop-filter: blur(3px);
+  }
+  .db-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .db-brand img {
+    width: 180px;
+    max-width: 38vw;
+    height: auto;
+    border-radius: 10px;
+    border: 1px solid #d9dee6;
+    background: #f8fafc;
   }
   .db-header > div {
     text-align: right;
@@ -300,11 +313,11 @@
     white-space: nowrap;
   }
 
-  .t-checkout { background: #1d4ed8; }
-  .t-return { background: #15803d; }
-  .t-consume { background: #6d28d9; }
-  .t-lost { background: #b91c1c; }
-  .t-damaged { background: #c2410c; }
+  .t-checkout { background: #0f9b82; }
+  .t-return { background: #17b394; }
+  .t-consume { background: #8b919b; }
+  .t-lost { background: #e6272f; }
+  .t-damaged { background: #6f7785; }
 
   .empty {
     margin: 8px 0;
@@ -422,8 +435,11 @@
 
 <div class="db-wrap">
   <div class="db-header">
+    <div class="db-brand">
+      <img src="{% static 'branding/sepehran-logo.jpg' %}" alt="لوگو فناوران سپهران موتور">
+    </div>
     <div>
-      <h1 class="db-title">داشبورد مدیریت ابزار کارگاه</h1>
+      <h1 class="db-title">داشبورد مدیریت ابزار - فناوران سپهران موتور</h1>
       <p class="db-sub">نمای زنده وضعیت موجودی، گردش ابزار و هشدارهای عملیاتی</p>
     </div>
   </div>

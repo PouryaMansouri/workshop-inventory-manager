@@ -7,6 +7,7 @@ from .unit_of_measure import UnitOfMeasure
 from .location import Location
 from .product import Product
 from .item_instance import ItemInstance
+from .item_check_confirmation import ItemCheckConfirmation
 
 __all__ = [
     'Category',
@@ -15,4 +16,5 @@ __all__ = [
     'Location',
     'Product',
     'ItemInstance',
+    'ItemCheckConfirmation',
 ]

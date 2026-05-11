@@ -1,0 +1,112 @@
+{% load static %}
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}سامانه ابزار{% endblock %}</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --text: #212833;
+      --muted: #5f6978;
+      --border: #dbe3ef;
+      --brand: #17b394;
+      --danger: #e6272f;
+      --silver: #8f96a2;
+      --shadow: 0 12px 30px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Tahoma, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 8% 10%, rgba(23,179,148,.10), transparent 30%),
+        radial-gradient(circle at 92% 8%, rgba(230,39,47,.08), transparent 28%),
+        var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 1240px; margin: 20px auto; padding: 0 14px 24px; }
+    .top {
+      background: linear-gradient(120deg, #f8fafc 0%, #eef3f8 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand img { width: 160px; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
+    .brand .name { font-weight: 800; color: #3c4553; }
+    .menu { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      text-decoration: none;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 11px;
+      font-weight: 700;
+      font-size: .93rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn:hover { border-color: var(--brand); color: var(--brand); }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .muted { color: var(--muted); }
+    .ok { color: var(--brand); font-weight: 700; }
+    .error { color: var(--danger); font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border: 1px solid #dbe3ef; padding: 8px; text-align: right; vertical-align: top; }
+    th { background: #f1f5f9; color: #3b4757; }
+    .empty {
+      padding: 18px;
+      text-align: center;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+    }
+    @media (max-width: 860px) {
+      .top { align-items: flex-start; }
+      table, thead, tbody, tr, th, td { display: block; width: 100%; }
+      thead { display: none; }
+      tr { border: 1px solid var(--border); margin-bottom: 10px; border-radius: 10px; overflow: hidden; }
+      td { position: relative; padding-right: 42%; }
+      td::before { content: attr(data-label); position: absolute; right: 8px; color: var(--muted); font-weight: 700; }
+    }
+  </style>
+  {% block extra_styles %}{% endblock %}
+</head>
+<body>
+  <main class="wrap">
+    <section class="top">
+      <div class="brand">
+        <img src="{% static 'branding/sepehran-logo.jpg' %}" alt="لوگو فناوران سپهران موتور">
+        <div class="name">فناوران سپهران موتور</div>
+      </div>
+      <nav class="menu" aria-label="menu-links">
+        {% for link in menu_links %}
+          <a class="btn" href="{{ link.url }}">{{ link.title }}</a>
+        {% endfor %}
+      </nav>
+    </section>
+
+    {% block content %}{% endblock %}
+  </main>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
