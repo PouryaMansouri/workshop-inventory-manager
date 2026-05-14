@@ -70,3 +70,13 @@ class MarkLostDamagedForm(forms.Form):
         help_text='دلیل گم شدن یا خرابی',
         widget=forms.Textarea(attrs={'rows': 3, 'style': 'width: 300px;'})
     )
+
+
+class CheckConfirmationForm(forms.Form):
+    """Form for confirming latest item check."""
+
+    notes = forms.CharField(
+        label='یادداشت تایید',
+        required=False,
+        widget=forms.Textarea(attrs={'rows': 3, 'style': 'width: 300px;'})
+    )

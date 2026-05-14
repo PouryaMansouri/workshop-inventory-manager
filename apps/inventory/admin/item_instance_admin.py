@@ -97,6 +97,7 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
         'report_maintenance_selected',
         'mark_lost_selected',
         'mark_damaged_selected',
+        'confirm_check_selected',
         'generate_barcodes',
         'generate_pdf_labels',
         'import_from_csv',

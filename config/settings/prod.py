@@ -30,11 +30,11 @@ DATABASES = {
     }
 }
 
-# Cache configuration (Redis)
+# Cache configuration
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://redis:6379/0'),
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'default-cache',
     }
 }
 

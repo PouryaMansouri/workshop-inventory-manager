@@ -5,12 +5,58 @@
 {% block extra_styles %}
 <style>
   input { min-width: 320px; padding: 9px; border: 1px solid #cdd7e6; border-radius: 8px; }
-  textarea { min-width: 320px; min-height: 90px; padding: 9px; border: 1px solid #cdd7e6; border-radius: 8px; }
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid #cdd7e6;
+    border-radius: 12px;
+    background: #fbfdff;
+    color: var(--text);
+    line-height: 1.8;
+    resize: vertical;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: #9ac9e8;
+    box-shadow: 0 0 0 3px rgba(23, 179, 148, 0.12);
+  }
+  .notes-wrap {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px dashed #d7e2f1;
+    border-radius: 12px;
+    background: #f8fbff;
+  }
+  .notes-label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #2e3b4f;
+  }
+  .form-actions {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-start;
+  }
+  .submit-btn {
+    background: linear-gradient(90deg, #17b394 0%, #149a80 100%);
+    border-color: #149a80;
+    color: #fff;
+    font-weight: 800;
+    padding: 10px 16px;
+  }
+  .submit-btn:hover {
+    color: #fff;
+    border-color: #11846d;
+    background: linear-gradient(90deg, #149a80 0%, #11846d 100%);
+  }
   .confirm-tools { margin-top: 12px; display: grid; gap: 10px; }
   .confirm-row {
-    display: grid;
-    grid-template-columns: 28px 1fr;
-    gap: 10px;
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    gap: 12px;
     align-items: center;
     padding: 12px;
     border: 1px solid #d7e2f1;
@@ -24,22 +70,65 @@
     transform: translateY(-1px);
   }
   .confirm-row input[type="checkbox"] {
+    flex: 0 0 20px;
     width: 18px;
     height: 18px;
     accent-color: var(--brand);
+    margin: 0;
   }
   .confirm-row input[type="checkbox"]:disabled {
     opacity: .45;
     cursor: not-allowed;
   }
+  .confirm-content {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: right;
+  }
   .confirm-main { font-weight: 700; color: #243042; }
   .confirm-sub { margin-top: 4px; font-size: .84rem; color: var(--muted); }
   .confirm-actions { display:flex; gap:8px; flex-wrap:wrap; }
   .confirm-title { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .confirm-panel {
+    margin-top: 10px;
+    border: 1px solid #d8e3f2;
+    border-radius: 14px;
+    padding: 12px;
+    background: linear-gradient(180deg, #fcfdff 0%, #f4f8ff 100%);
+  }
+  .confirm-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .selection-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #cdddf1;
+    background: #fff;
+    color: #415168;
+    font-size: .86rem;
+    font-weight: 700;
+  }
+  .btn-soft {
+    background: #fff;
+    border-color: #c9d8eb;
+  }
   .tiny { font-size: .86rem; color: var(--muted); }
   .history-list { margin: 6px 0 0; padding: 0 18px 0 0; }
   .history-list li { margin-bottom: 4px; }
-  @media (max-width: 800px) { input { min-width: 100%; } }
+  @media (max-width: 800px) {
+    input { min-width: 100%; }
+    .form-actions { justify-content: stretch; }
+    .submit-btn { width: 100%; }
+    .confirm-toolbar { align-items: stretch; }
+  }
 </style>
 {% endblock %}
 
@@ -75,25 +164,36 @@
   <form method="post">
     {% csrf_token %}
     <input type="hidden" name="q" value="{{ query }}">
-    <div class="confirm-tools">
-      {% for r in rows %}
-        <label class="confirm-row">
-          <input class="confirm-check" type="checkbox" name="selected_txn_ids" value="{{ r.transaction_id }}" disabled>
-          <span>
-            <div class="confirm-main">{{ r.item_name }}</div>
-            <div class="confirm-sub">{{ r.barcode }} | سریال: {{ r.serial }} | تحویل: {{ r.date_out|date:"Y-m-d H:i" }}</div>
-          </span>
-        </label>
-      {% empty %}
-        <div class="muted">ابزار فعالی برای تایید وجود ندارد.</div>
-      {% endfor %}
+    <div class="confirm-panel">
+      <div class="confirm-toolbar">
+        <div class="confirm-actions">
+          <button class="btn btn-soft" type="button" onclick="setSelectionEnabled(true)">فعال‌سازی انتخاب</button>
+          <button class="btn btn-soft" type="button" onclick="toggleAllChecks(true)">انتخاب همه</button>
+          <button class="btn btn-soft" type="button" onclick="toggleAllChecks(false)">لغو انتخاب همه</button>
+        </div>
+        <div id="selectionStat" class="selection-stat">انتخاب غیرفعال است</div>
+      </div>
+
+      <div class="confirm-tools">
+        {% for r in rows %}
+          <label class="confirm-row">
+            <input class="confirm-check" type="checkbox" name="selected_txn_ids" value="{{ r.transaction_id }}" disabled onchange="refreshSelectionStat()">
+            <span class="confirm-content">
+              <div class="confirm-main">{{ r.item_name }}</div>
+              <div class="confirm-sub">{{ r.barcode }} | سریال: {{ r.serial }} | تحویل: {{ r.date_out|date:"Y-m-d H:i" }}</div>
+            </span>
+          </label>
+        {% empty %}
+          <div class="muted">ابزار فعالی برای تایید وجود ندارد.</div>
+        {% endfor %}
+      </div>
     </div>
-    <div style="margin-top:10px;">
-      <label for="notes">یادداشت تایید</label>
+    <div class="notes-wrap">
+      <label class="notes-label" for="notes">یادداشت تایید</label>
       <textarea id="notes" name="notes" placeholder="توضیحات اختیاری..."></textarea>
     </div>
-    <div style="margin-top:10px;">
-      <button class="btn" type="submit">ثبت تایید انتخاب‌شده‌ها</button>
+    <div class="form-actions">
+      <button class="btn submit-btn" type="submit">ثبت تایید انتخاب‌شده‌ها</button>
     </div>
   </form>
 </section>
@@ -155,6 +255,25 @@
 
 {% block extra_scripts %}
 <script>
+  function toPersianDigits(input) {
+    var en = "0123456789";
+    var fa = "۰۱۲۳۴۵۶۷۸۹";
+    return String(input).replace(/[0-9]/g, function (d) { return fa[en.indexOf(d)]; });
+  }
+
+  function refreshSelectionStat() {
+    var checks = Array.from(document.querySelectorAll('.confirm-check'));
+    var selected = checks.filter(function (el) { return el.checked; }).length;
+    var enabled = checks.filter(function (el) { return !el.disabled; }).length;
+    var stat = document.getElementById('selectionStat');
+    if (!stat) return;
+    if (enabled === 0) {
+      stat.textContent = 'انتخاب غیرفعال است';
+    } else {
+      stat.textContent = toPersianDigits(selected) + ' مورد انتخاب‌شده';
+    }
+  }
+
   function setSelectionEnabled(enabled) {
     document.querySelectorAll('.confirm-check').forEach(function (el) {
       el.disabled = !enabled;
@@ -162,6 +281,7 @@
         el.checked = false;
       }
     });
+    refreshSelectionStat();
   }
 
   function toggleAllChecks(checked) {
@@ -170,6 +290,9 @@
         el.checked = checked;
       }
     });
+    refreshSelectionStat();
   }
+
+  refreshSelectionStat();
 </script>
 {% endblock %}
