@@ -73,7 +73,7 @@ class TestAssignedItemsReport:
 
     def test_report_export_xlsx(self):
         worker, _ = self._build_fixture()
-        viewer = User.objects.create_user(username='viewer', password='x')
+        viewer = User.objects.create_user(username='viewer', password='x', is_staff=True)
         assert self.client.login(username='viewer', password='x')
 
         response = self.client.get(reverse('assigned_items_report_export_xlsx'), {'holder_id': worker.id})

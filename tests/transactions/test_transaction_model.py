@@ -66,7 +66,7 @@ class TestTransactionCreation:
         assert txn.id is not None
         assert txn.transaction_type == 'checkout'
         assert txn.returned_at is None
-        assert str(txn).startswith('checkout')
+        assert str(txn).startswith(txn.get_transaction_type_display())
     
     def test_create_return_transaction(self, setup_data):
         """Test creating a return transaction."""

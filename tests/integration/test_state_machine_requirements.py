@@ -132,7 +132,7 @@ class TestStateMachineRequirements:
         item.refresh_from_db()
 
         assert txn.transaction_type == 'consume'
-        assert item.status == 'damaged'
+        assert item.status == 'consumed'
 
     def test_checkout_and_return_both_appear_in_history(self, setup_sm):
         item = setup_sm['item']

@@ -52,6 +52,9 @@ class CSVImportService:
         
         if not row['serial_number']:
             return False, f"Row {row_number}: serial_number is required"
+
+        if not row['location']:
+            return False, f"Row {row_number}: location is required"
         
         # Check if product exists
         try:
@@ -63,10 +66,8 @@ class CSVImportService:
         if ItemInstance.objects.filter(serial_number=row['serial_number']).exists():
             return False, f"Row {row_number}: Serial number '{row['serial_number']}' already exists"
         
-        # Check if location exists (if provided)
-        if row['location']:
-            if not Location.objects.filter(name=row['location']).exists():
-                return False, f"Row {row_number}: Location '{row['location']}' not found"
+        if not Location.objects.filter(name=row['location']).exists():
+            return False, f"Row {row_number}: Location '{row['location']}' not found"
         
         return True, ""
     
@@ -151,6 +152,11 @@ class CSVImportService:
                 result['errors'].append(f"Row {idx}: {str(e)}")
                 result['error_count'] += 1
                 result['success'] = False
+                # The decorator's atomic block must roll back earlier rows too.
+                transaction.set_rollback(True)
+                result['created_count'] = 0
+                result['created_items'] = []
+                break
         
         return result
     

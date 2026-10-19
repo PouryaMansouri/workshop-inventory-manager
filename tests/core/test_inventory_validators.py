@@ -8,6 +8,8 @@ from apps.inventory.models import (
 )
 from core.validators.inventory_validators import InventoryValidators
 
+pytestmark = pytest.mark.django_db
+
 
 @pytest.fixture
 def setup_data(db):

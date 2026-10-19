@@ -14,7 +14,7 @@ class TestHolderToolsLookup:
     def test_lookup_by_phone_and_personnel_code(self):
         client = Client()
 
-        viewer = User.objects.create_user(username='viewer', password='x')
+        viewer = User.objects.create_user(username='viewer', password='x', is_staff=True)
         holder = User.objects.create_user(username='holder', password='x', first_name='Ali', last_name='Karimi')
         UserExtension.objects.create(user=holder, phone_number='09120000000', personnel_code='WRK-009')
 

@@ -10,6 +10,11 @@ if TYPE_CHECKING:
 
 class StockService:
     """Service for stock calculations."""
+
+    @staticmethod
+    def get_available_stock(product: 'Product') -> int:
+        """Return the number of items currently available for issue."""
+        return product.iteminstance_set.filter(status='available').count()
     
     @staticmethod
     def get_current_stock(product: 'Product') -> int:
@@ -22,7 +27,17 @@ class StockService:
         Returns:
             Number of available items
         """
-        return product.iteminstance_set.filter(status='available').count()
+        return StockService.get_available_stock(product)
+
+    @staticmethod
+    def get_total_stock(product: 'Product') -> int:
+        """Count all physical items, including unavailable ones."""
+        return product.iteminstance_set.count()
+
+    @staticmethod
+    def is_low_stock(product: 'Product') -> bool:
+        """Check the available stock against the product threshold."""
+        return StockService.get_available_stock(product) < product.minimum_stock
     
     @staticmethod
     def get_stock_by_status(product: 'Product') -> Dict[str, int]:
@@ -35,8 +50,6 @@ class StockService:
         Returns:
             Dictionary with status as key and count as value
         """
-        from apps.inventory.models import ItemInstance
-        
         result = product.iteminstance_set.values('status').annotate(
             count=Count('id')
         )
@@ -47,10 +60,13 @@ class StockService:
             'maintenance': 0,
             'lost': 0,
             'damaged': 0,
+            'consumed': 0,
         }
         
         for item in result:
             stock_dict[item['status']] = item['count']
+
+        stock_dict['total'] = sum(stock_dict.values())
         
         return stock_dict
     
@@ -65,12 +81,12 @@ class StockService:
         from apps.inventory.models import Product
         
         return Product.objects.annotate(
-            current_stock=Count(
+            available_count=Count(
                 'iteminstance',
                 filter=Q(iteminstance__status='available')
             )
         ).filter(
-            current_stock__lt=F('minimum_stock')
+            available_count__lt=F('minimum_stock')
         ).select_related(
             'category',
             'workshop_unit',
@@ -88,12 +104,12 @@ class StockService:
         from apps.inventory.models import Product
         
         return Product.objects.annotate(
-            current_stock=Count(
+            available_count=Count(
                 'iteminstance',
                 filter=Q(iteminstance__status='available')
             )
         ).filter(
-            current_stock=0
+            available_count=0
         ).select_related(
             'category',
             'workshop_unit',

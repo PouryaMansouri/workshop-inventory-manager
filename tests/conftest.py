@@ -5,6 +5,12 @@ import pytest
 from django.contrib.auth.models import User
 
 
+@pytest.fixture(autouse=True)
+def isolated_media(settings, tmp_path):
+    """Keep generated barcode images out of the project and other tests."""
+    settings.MEDIA_ROOT = tmp_path
+
+
 @pytest.fixture
 def user(db):
     """Create a test user."""

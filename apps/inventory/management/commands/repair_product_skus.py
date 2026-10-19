@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.inventory.models import Product
+from apps.inventory.models import ItemInstance, Product
 from core.services.sku_service import SKUService
 
 
@@ -48,6 +48,8 @@ class Command(BaseCommand):
                 if fix:
                     with transaction.atomic():
                         Product.objects.filter(pk=product.pk).update(sku_code=expected)
+                        for item in ItemInstance.objects.filter(product_id=product.pk):
+                            item.save(update_fields=['barcode', 'updated_at'])
                     fixed += 1
                 continue
 
@@ -61,6 +63,8 @@ class Command(BaseCommand):
                 if fix:
                     with transaction.atomic():
                         Product.objects.filter(pk=product.pk).update(sku_code=expected)
+                        for item in ItemInstance.objects.filter(product_id=product.pk):
+                            item.save(update_fields=['barcode', 'updated_at'])
                     fixed += 1
 
         summary = (

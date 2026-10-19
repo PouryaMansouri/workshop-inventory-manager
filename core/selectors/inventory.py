@@ -17,24 +17,29 @@ class InventorySelector:
         from apps.inventory.models import Product
         
         return Product.objects.annotate(
-            current_stock=Count(
+            available_count=Count(
                 'iteminstance',
                 filter=Q(iteminstance__status='available')
             )
         ).filter(
-            current_stock__lt=F('minimum_stock')
+            available_count__lt=F('minimum_stock')
         ).select_related(
             'category',
             'workshop_unit',
             'unit_of_measure'
-        ).order_by('current_stock')
+        ).order_by('available_count')
     
     @staticmethod
-    def get_available_items(product: 'Product') -> QuerySet['ItemInstance']:
+    def get_available_items(product: 'Product' = None) -> QuerySet['ItemInstance']:
         """Get available items for a product."""
-        return product.iteminstance_set.filter(
-            status='available'
-        ).select_related('location')
+        from apps.inventory.models import ItemInstance
+
+        queryset = ItemInstance.objects.filter(status='available')
+        if product is not None:
+            queryset = queryset.filter(product=product)
+        return queryset.select_related(
+            'location', 'product', 'product__category', 'product__workshop_unit'
+        )
     
     @staticmethod
     def get_items_by_location(location_id: int) -> QuerySet['ItemInstance']:

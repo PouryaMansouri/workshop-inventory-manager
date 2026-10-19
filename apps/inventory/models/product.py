@@ -114,7 +114,9 @@ class Product(models.Model):
     
     def _generate_sku(self) -> str:
         """Generate SKU code in format: WORKSHOP-CATEGORY-ID."""
-        return f'{self.workshop_unit.code}-{self.category.code}-{self.id:06d}'
+        from core.services.sku_service import SKUService
+
+        return SKUService.generate_sku(self)
     
     @property
     def current_stock(self) -> int:

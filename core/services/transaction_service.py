@@ -149,8 +149,8 @@ class TransactionService:
         # Validate
         TransactionValidator.validate_consume(item, user)
         
-        # Update item status (consumed items are marked as unavailable)
-        item.status = 'damaged'  # Or create a 'consumed' status
+        # Preserve the item and its transaction history for audit.
+        item.status = 'consumed'
         item.save(update_fields=['status', 'updated_at'])
         
         # Create transaction

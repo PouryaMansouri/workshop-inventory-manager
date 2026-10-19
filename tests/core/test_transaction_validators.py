@@ -85,7 +85,7 @@ class TestValidateCheckout:
         with pytest.raises(ValidationError) as exc:
             TransactionValidator.validate_checkout(setup_data['item'])
         
-        assert 'not available' in str(exc.value).lower()
+        assert 'قابل تحویل نیست' in str(exc.value).lower()
     
     def test_validate_checkout_maintenance_item(self, setup_data):
         """Test checkout validation fails for item in maintenance."""
@@ -138,7 +138,7 @@ class TestValidateReturn:
         with pytest.raises(ValidationError) as exc:
             TransactionValidator.validate_return(setup_data['item'])
         
-        assert 'not checked out' in str(exc.value).lower()
+        assert 'قابل بازگشت نیست' in str(exc.value).lower()
     
     def test_validate_return_without_checkout_transaction(self, setup_data):
         """Test return validation fails without checkout transaction."""
@@ -148,7 +148,7 @@ class TestValidateReturn:
         with pytest.raises(ValidationError) as exc:
             TransactionValidator.validate_return(setup_data['item'])
         
-        assert 'no active checkout' in str(exc.value).lower()
+        assert 'هیچ تحویل بازی' in str(exc.value).lower()
     
     def test_validate_return_with_already_returned(self, setup_data):
         """Test return validation fails if already returned."""
@@ -183,7 +183,7 @@ class TestValidateConsume:
         with pytest.raises(ValidationError) as exc:
             TransactionValidator.validate_consume(setup_data['item'])
         
-        assert 'not consumable' in str(exc.value).lower()
+        assert 'مصرفی نیست' in str(exc.value).lower()
     
     def test_validate_consume_unavailable_item(self, setup_data):
         """Test consume validation fails for unavailable item."""
@@ -193,7 +193,7 @@ class TestValidateConsume:
         with pytest.raises(ValidationError) as exc:
             TransactionValidator.validate_consume(setup_data['consumable_item'])
         
-        assert 'not available' in str(exc.value).lower()
+        assert 'قابل مصرف نیست' in str(exc.value).lower()
 
 
 class TestValidateExpectedReturnDate:
@@ -212,7 +212,7 @@ class TestValidateExpectedReturnDate:
         with pytest.raises(ValidationError) as exc:
             TransactionValidator.validate_expected_return_date(past_date)
         
-        assert 'cannot be in the past' in str(exc.value).lower()
+        assert 'در گذشته' in str(exc.value).lower()
     
     def test_validate_today_return_date(self):
         """Test validation for today's date."""
@@ -237,7 +237,7 @@ class TestValidateTransactionType:
         with pytest.raises(ValidationError) as exc:
             TransactionValidator.validate_transaction_type('invalid_type')
         
-        assert 'invalid transaction type' in str(exc.value).lower()
+        assert 'نامعتبر' in str(exc.value).lower()
     
     def test_validate_empty_transaction_type(self):
         """Test validation fails for empty type."""
@@ -275,7 +275,7 @@ class TestValidateItemStatus:
                 ['available', 'maintenance']
             )
         
-        assert 'status must be' in str(exc.value).lower()
+        assert 'وضعیت ابزار باید' in str(exc.value).lower()
 
 
 class TestValidateUserPermissions:
@@ -310,11 +310,11 @@ class TestValidateBulkOperation:
         with pytest.raises(ValidationError) as exc:
             TransactionValidator.validate_bulk_operation(items, max_items=100)
         
-        assert 'limited to' in str(exc.value).lower()
+        assert 'حداکثر' in str(exc.value).lower()
     
     def test_validate_empty_bulk_operation(self):
         """Test validation fails for empty bulk operation."""
         with pytest.raises(ValidationError) as exc:
             TransactionValidator.validate_bulk_operation([])
         
-        assert 'no items' in str(exc.value).lower()
+        assert 'هیچ ابزاری' in str(exc.value).lower()

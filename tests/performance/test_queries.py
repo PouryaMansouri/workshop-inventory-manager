@@ -40,6 +40,7 @@ def setup_large_dataset(db):
             ItemInstance(
                 product=product,
                 serial_number=f'PERF-{i:04d}',
+                barcode=f'{product.sku_code}-PERF-{i:04d}',
                 location=location,
                 status='available' if i % 2 == 0 else 'checked_out'
             )
@@ -132,82 +133,29 @@ class TestQueryCounts:
 
 class TestDatabaseIndexes:
     """Tests to verify critical database indexes exist."""
+
+    @staticmethod
+    def _indexed_columns(model):
+        with connection.cursor() as cursor:
+            constraints = connection.introspection.get_constraints(cursor, model._meta.db_table)
+        return {
+            column
+            for details in constraints.values()
+            if details['index'] or details['unique']
+            for column in details['columns']
+        }
     
     def test_item_instance_indexes_exist(self, db):
         """Test ItemInstance has required indexes."""
-        from django.db import connection
-        
-        with connection.cursor() as cursor:
-            # Get table name
-            table_name = ItemInstance._meta.db_table
-            
-            # Get indexes for the table
-            cursor.execute(f"""
-                SELECT indexname, indexdef 
-                FROM pg_indexes 
-                WHERE tablename = '{table_name}'
-            """)
-            indexes = cursor.fetchall()
-            index_names = [idx[0] for idx in indexes]
-            
-            # Check for critical indexes
-            # Note: Django creates indexes with specific naming patterns
-            # We check that indexes exist on key fields
-            
-            # Serial number should be indexed (unique constraint creates index)
-            assert any('serial_number' in idx for idx in index_names)
-            
-            # Barcode should be indexed
-            assert any('barcode' in idx for idx in index_names)
-            
-            # Status should be indexed
-            assert any('status' in idx for idx in index_names)
+        assert {'serial_number', 'barcode', 'status'} <= self._indexed_columns(ItemInstance)
     
     def test_transaction_indexes_exist(self, db):
         """Test Transaction has required indexes."""
-        from django.db import connection
-        
-        with connection.cursor() as cursor:
-            table_name = Transaction._meta.db_table
-            
-            cursor.execute(f"""
-                SELECT indexname, indexdef 
-                FROM pg_indexes 
-                WHERE tablename = '{table_name}'
-            """)
-            indexes = cursor.fetchall()
-            index_names = [idx[0] for idx in indexes]
-            
-            # Check for critical indexes
-            # Item foreign key should be indexed
-            assert any('item' in idx for idx in index_names)
-            
-            # User foreign key should be indexed
-            assert any('user' in idx for idx in index_names)
-            
-            # Transaction type should be indexed
-            assert any('transaction_type' in idx for idx in index_names)
+        assert {'item_id', 'user_id', 'transaction_type'} <= self._indexed_columns(Transaction)
     
     def test_product_indexes_exist(self, db):
         """Test Product has required indexes."""
-        from django.db import connection
-        
-        with connection.cursor() as cursor:
-            table_name = Product._meta.db_table
-            
-            cursor.execute(f"""
-                SELECT indexname, indexdef 
-                FROM pg_indexes 
-                WHERE tablename = '{table_name}'
-            """)
-            indexes = cursor.fetchall()
-            index_names = [idx[0] for idx in indexes]
-            
-            # SKU code should be indexed (unique constraint)
-            assert any('sku_code' in idx for idx in index_names)
-            
-            # Name should be indexed
-            assert any('name' in idx for idx in index_names)
+        assert {'sku_code', 'name'} <= self._indexed_columns(Product)
 
 
 class TestSelectRelatedUsage:
@@ -259,6 +207,7 @@ class TestBulkOperationPerformance:
                 ItemInstance(
                     product=product,
                     serial_number=f'BULK-{i:04d}',
+                    barcode=f'{product.sku_code}-BULK-{i:04d}',
                     location=location,
                     status='available'
                 )
@@ -268,13 +217,12 @@ class TestBulkOperationPerformance:
     
     def test_bulk_update_performance(self, setup_large_dataset, django_assert_max_num_queries):
         """Test bulk update is efficient."""
-        items = ItemInstance.objects.filter(
-            serial_number__startswith='PERF-'
-        )[:50]
-        
-        # Bulk update should use only 1 UPDATE query
-        with django_assert_max_num_queries(2):  # 1 for select, 1 for update
-            items.update(status='maintenance')
+        # Django does not permit updating a sliced queryset. Select IDs first.
+        with django_assert_max_num_queries(2):
+            item_ids = list(ItemInstance.objects.filter(
+                serial_number__startswith='PERF-'
+            ).values_list('id', flat=True)[:50])
+            ItemInstance.objects.filter(id__in=item_ids).update(status='maintenance')
 
 
 class TestStockCalculationPerformance:

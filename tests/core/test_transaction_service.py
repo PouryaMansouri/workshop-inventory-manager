@@ -149,7 +149,7 @@ class TestCheckoutItem:
                 created_by=admin_user
             )
         
-        assert 'not available' in str(exc_info.value).lower()
+        assert 'قابل تحویل نیست' in str(exc_info.value).lower()
     
     def test_checkout_already_checked_out_item_fails(self, item, user, admin_user):
         """Test checkout of already checked out item fails."""
@@ -214,7 +214,7 @@ class TestReturnItem:
                 created_by=admin_user
             )
         
-        assert 'not checked out' in str(exc_info.value).lower()
+        assert 'قابل بازگشت نیست' in str(exc_info.value).lower()
     
     def test_return_without_checkout_fails(self, item, admin_user):
         """Test return without checkout transaction fails."""
@@ -252,8 +252,10 @@ class TestConsumeItem:
         assert transaction.transaction_type == 'consume'
         assert transaction.user == user
         
-        # Verify item deleted
-        assert not ItemInstance.objects.filter(id=item.id).exists()
+        # A consumed item stays in the audit trail but cannot be issued again.
+        item.refresh_from_db()
+        assert item.status == 'consumed'
+        assert item.is_available is False
     
     def test_consume_non_consumable_item_fails(self, item, user, admin_user):
         """Test consumption of non-consumable item fails."""
@@ -264,7 +266,7 @@ class TestConsumeItem:
                 created_by=admin_user
             )
         
-        assert 'not consumable' in str(exc_info.value).lower()
+        assert 'مصرفی نیست' in str(exc_info.value).lower()
     
     def test_consume_unavailable_item_fails(self, consumable_product, location, user, admin_user):
         """Test consumption of unavailable item fails."""

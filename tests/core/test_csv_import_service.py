@@ -7,6 +7,8 @@ from apps.inventory.models import (
 )
 from core.services.csv_import_service import CSVImportService
 
+pytestmark = pytest.mark.django_db
+
 
 @pytest.fixture
 def workshop_unit(db):
@@ -182,7 +184,7 @@ class TestValidateRow:
         assert 'not found' in error.lower()
     
     def test_validate_row_without_location(self, product):
-        """Test validation succeeds when location is empty."""
+        """Reject rows that cannot satisfy the required location relation."""
         row = {
             'product_sku': product.sku_code,
             'serial_number': '12345',
@@ -191,7 +193,8 @@ class TestValidateRow:
         
         is_valid, error = CSVImportService.validate_row(row, 2)
         
-        assert is_valid is True
+        assert is_valid is False
+        assert 'location is required' in error
 
 
 class TestImportItems:
@@ -216,17 +219,15 @@ class TestImportItems:
         assert ItemInstance.objects.filter(serial_number='12346').exists()
     
     def test_import_without_location(self, product):
-        """Test import without location field."""
+        """A location is required by the item model."""
         csv_content = f"""product_sku,serial_number,location
 {product.sku_code},12345,"""
         
         result = CSVImportService.import_items(csv_content)
         
-        assert result['success'] is True
-        assert result['created_count'] == 1
-        
-        item = ItemInstance.objects.get(serial_number='12345')
-        assert item.location is None
+        assert result['success'] is False
+        assert result['created_count'] == 0
+        assert 'location is required' in result['errors'][0]
     
     def test_import_with_validation_errors(self, product, location):
         """Test import fails when validation errors exist."""

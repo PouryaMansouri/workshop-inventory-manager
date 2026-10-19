@@ -359,6 +359,7 @@ class TestStockCalculationPerformance:
                 ItemInstance(
                     product=product,
                     serial_number=f'SN-{i:04d}',
+                    barcode=f'{product.sku_code}-SN-{i:04d}',
                     location=location,
                     status='available' if i % 2 == 0 else 'checked_out'
                 )

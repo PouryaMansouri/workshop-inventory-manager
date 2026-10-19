@@ -18,6 +18,7 @@ class ItemInstance(models.Model):
         ('maintenance', 'در تعمیر'),
         ('lost', 'گم شده'),
         ('damaged', 'خراب'),
+        ('consumed', 'مصرف شده'),
     ]
     
     product = models.ForeignKey(
@@ -92,13 +93,19 @@ class ItemInstance(models.Model):
         return f'{self.product.name} - {self.serial_number} ({self.get_status_display()})'
     
     def save(self, *args, **kwargs) -> None:
-        """Generate barcode on first save."""
-        if not self.barcode:
-            # Generate barcode: {sku}-{serial_number}
-            # We need product to be saved first
-            if self.product and self.product.sku_code:
-                self.barcode = f'{self.product.sku_code}-{self.serial_number}'
+        """Keep the barcode and its image in sync with the product and serial."""
+        from core.services.barcode_service import BarcodeService
+
+        expected_barcode = BarcodeService.generate_barcode(self.product, self.serial_number)
+        barcode_changed = self.barcode != expected_barcode
+        if barcode_changed:
+            self.barcode = expected_barcode
+            if kwargs.get('update_fields') is not None:
+                kwargs['update_fields'] = set(kwargs['update_fields']) | {'barcode'}
+
         super().save(*args, **kwargs)
+        if barcode_changed or not self.barcode_image:
+            BarcodeService.save_barcode_image(self)
     
     @property
     def is_available(self) -> bool:

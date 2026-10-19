@@ -2,6 +2,7 @@
 Barcode generation service.
 """
 import io
+import hashlib
 from typing import TYPE_CHECKING
 from django.core.files.base import ContentFile
 import barcode
@@ -15,21 +16,21 @@ class BarcodeService:
     """Service for generating barcodes."""
     
     @staticmethod
-    def generate_barcode(item: 'ItemInstance') -> None:
-        """
-        Generate barcode image for an item instance.
-        
-        Args:
-            item: ItemInstance to generate barcode for
-        """
-        if not item.barcode:
-            raise ValueError('Item must have a barcode string before generating image')
-        
-        # Generate barcode using Code128
+    def generate_barcode(product, serial_number: str) -> str:
+        """Build the stable barcode value for a product and serial number."""
+        if not product or not product.sku_code:
+            raise ValueError('Product must have SKU before generating barcode')
+        if not serial_number:
+            raise ValueError('Item must have serial number before generating barcode')
+        return f'{product.sku_code}-{serial_number}'
+
+    @staticmethod
+    def generate_barcode_image(barcode_text: str) -> bytes:
+        """Render a Code128 barcode as PNG bytes."""
+        if not barcode_text:
+            raise ValueError('Barcode text is required')
         code128 = barcode.get_barcode_class('code128')
-        barcode_instance = code128(item.barcode, writer=ImageWriter())
-        
-        # Generate image in memory
+        barcode_instance = code128(barcode_text, writer=ImageWriter())
         buffer = io.BytesIO()
         barcode_instance.write(buffer, options={
             'module_width': 0.2,
@@ -39,13 +40,21 @@ class BarcodeService:
             'text_distance': 5.0,
         })
         
-        # Save to model
-        filename = f'{item.barcode}.png'
+        return buffer.getvalue()
+
+    @staticmethod
+    def save_barcode_image(item: 'ItemInstance') -> None:
+        """Store an item's barcode image without recursively saving the model."""
+        if not item.pk or not item.barcode:
+            raise ValueError('Item must be saved with a barcode first')
+        digest = hashlib.sha256(item.barcode.encode('utf-8')).hexdigest()[:12]
+        filename = f'{item.pk}-{digest}.png'
         item.barcode_image.save(
             filename,
-            ContentFile(buffer.getvalue()),
-            save=True
+            ContentFile(BarcodeService.generate_barcode_image(item.barcode)),
+            save=False,
         )
+        type(item).objects.filter(pk=item.pk).update(barcode_image=item.barcode_image.name)
     
     @staticmethod
     def generate_barcode_string(item: 'ItemInstance') -> str:
@@ -61,10 +70,4 @@ class BarcodeService:
         Returns:
             Generated barcode string
         """
-        if not item.product or not item.product.sku_code:
-            raise ValueError('Product must have SKU before generating barcode')
-        
-        if not item.serial_number:
-            raise ValueError('Item must have serial number before generating barcode')
-        
-        return f'{item.product.sku_code}-{item.serial_number}'
+        return BarcodeService.generate_barcode(item.product, item.serial_number)

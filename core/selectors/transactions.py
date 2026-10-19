@@ -71,16 +71,20 @@ class TransactionSelector:
         ).order_by('-created_at')
     
     @staticmethod
-    def get_recent_transactions(limit: int = 10) -> QuerySet['Transaction']:
+    def get_recent_transactions(limit: int = 10, days: int = None) -> QuerySet['Transaction']:
         """Get recent transactions."""
         from apps.transactions.models import Transaction
         
-        return Transaction.objects.select_related(
+        queryset = Transaction.objects.select_related(
             'item',
             'item__product',
             'user',
             'created_by'
-        ).order_by('-created_at')[:limit]
+        )
+        if days is not None:
+            from datetime import timedelta
+            queryset = queryset.filter(created_at__gte=timezone.now() - timedelta(days=days))
+        return queryset.order_by('-created_at')[:limit]
 
     @staticmethod
     def get_assigned_items_rows(

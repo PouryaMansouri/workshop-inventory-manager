@@ -146,6 +146,7 @@ class DashboardWidgets:
             'maintenance': ItemInstance.objects.filter(status='maintenance').count(),
             'lost': ItemInstance.objects.filter(status='lost').count(),
             'damaged': ItemInstance.objects.filter(status='damaged').count(),
+            'consumed': ItemInstance.objects.filter(status='consumed').count(),
         }
         
         # Calculate percentages

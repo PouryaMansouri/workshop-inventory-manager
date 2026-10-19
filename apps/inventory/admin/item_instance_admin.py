@@ -127,6 +127,7 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
             'maintenance': '#fd7e14',
             'lost': '#dc3545',
             'damaged': '#6c757d',
+            'consumed': '#6f42c1',
         }
         labels = {
             'available': 'موجود',
@@ -134,6 +135,7 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
             'maintenance': 'در تعمیر',
             'lost': 'گم شده',
             'damaged': 'خراب',
+            'consumed': 'مصرف شده',
         }
         return format_html(
             '<span style="background-color: {}; color: white; '
@@ -248,7 +250,7 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
         
         for item in queryset:
             try:
-                BarcodeService.generate_barcode(item)
+                BarcodeService.save_barcode_image(item)
                 count += 1
             except Exception as e:
                 errors += 1
