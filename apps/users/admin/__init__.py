@@ -24,7 +24,8 @@ class UserCreationFormNoRequiredEmail(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['email'].required = False
+        if 'email' in self.fields:
+            self.fields['email'].required = False
 
 
 class UserChangeFormNoRequiredEmail(UserChangeForm):
@@ -43,6 +44,9 @@ class UserChangeFormNoRequiredEmail(UserChangeForm):
 class UserAdmin(BaseUserAdmin):
     form = UserChangeFormNoRequiredEmail
     add_form = UserCreationFormNoRequiredEmail
+    add_fieldsets = (
+        (None, {'classes': ('wide',), 'fields': ('username', 'email', 'password1', 'password2')}),
+    )
     inlines = (UserExtensionInline,)
     list_display = ('username', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser', 'is_active')
     search_fields = ('username', 'first_name', 'last_name', 'email', 'extension__phone_number', 'extension__personnel_code')

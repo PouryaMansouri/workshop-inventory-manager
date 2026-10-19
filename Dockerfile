@@ -42,7 +42,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/admin/login/', timeout=5)"
+    CMD python -c "import urllib.request; request = urllib.request.Request('http://localhost:8000/admin/login/', headers={'X-Forwarded-Proto': 'https'}); urllib.request.urlopen(request, timeout=5)"
 
 # Set entrypoint
 ENTRYPOINT ["docker-entrypoint.sh"]

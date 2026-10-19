@@ -5,11 +5,9 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-workshop_inventory}
       POSTGRES_USER: ${POSTGRES_USER:-workshop}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workshop_pass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "${DB_EXPOSE_PORT:-5433}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-workshop}"]
       interval: 10s
@@ -24,14 +22,15 @@ services:
     container_name: workshop_web
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.prod
-      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       DEBUG: ${DEBUG:-False}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
-      SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-False}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-workshop}:${POSTGRES_PASSWORD:-workshop_pass}@db:5432/${POSTGRES_DB:-workshop_inventory}
+      SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-True}
+      SECURE_HSTS_SECONDS: ${SECURE_HSTS_SECONDS:-0}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-workshop}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-workshop_inventory}
       POSTGRES_DB: ${POSTGRES_DB:-workshop_inventory}
       POSTGRES_USER: ${POSTGRES_USER:-workshop}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workshop_pass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       RUN_SEED_ON_START: ${RUN_SEED_ON_START:-False}
@@ -40,12 +39,12 @@ services:
       - ./media:/app/media
       - ./logs:/app/logs
     ports:
-      - "${WEB_EXPOSE_PORT:-8010}:8000"
+      - "127.0.0.1:${WEB_EXPOSE_PORT:-8010}:8000"
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/admin/login/', timeout=5)"]
+      test: ["CMD", "python", "-c", "import urllib.request; request = urllib.request.Request('http://localhost:8000/admin/login/', headers={'X-Forwarded-Proto': 'https'}); urllib.request.urlopen(request, timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -59,12 +58,12 @@ services:
     container_name: workshop_seed
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.prod
-      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       DEBUG: ${DEBUG:-False}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
       POSTGRES_DB: ${POSTGRES_DB:-workshop_inventory}
       POSTGRES_USER: ${POSTGRES_USER:-workshop}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workshop_pass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
     command: >

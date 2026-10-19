@@ -49,7 +49,7 @@ class ItemCheckConfirmation(models.Model):
         indexes = [
             models.Index(fields=['item', '-confirmed_at']),
             models.Index(fields=['confirmed_by']),
-            models.Index(fields=['checkout_transaction', '-confirmed_at']),
+            models.Index(fields=['checkout_transaction', '-confirmed_at'], name='inv_i_checkout_35c8f1_idx'),
         ]
 
     def __str__(self) -> str:

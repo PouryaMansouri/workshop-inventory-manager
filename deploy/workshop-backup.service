@@ -1,0 +1,8 @@
+[Unit]
+Description=Back up Workshop Inventory Manager database and media
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/workshop/deploy/backup.sh
