@@ -25,11 +25,11 @@ class TestHolderToolsLookup:
         product = Product.objects.create(
             name='Hammer 200',
             category=category,
-            workshop_unit=workshop,
             unit_of_measure=uom,
             minimum_stock=0,
         )
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='009',
             location=location,

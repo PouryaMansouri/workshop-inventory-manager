@@ -36,12 +36,12 @@ class TestAssignedItemsReport:
         product = Product.objects.create(
             name='Hammer 200',
             category=category,
-            workshop_unit=workshop,
             unit_of_measure=uom,
             minimum_stock=0,
         )
         item = ItemInstance.objects.create(
             product=product,
+            workshop_unit=workshop,
             serial_number='001',
             location=location,
             status='checked_out',

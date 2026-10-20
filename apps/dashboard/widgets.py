@@ -33,7 +33,6 @@ class DashboardWidgets:
             available_stock__lt=F('minimum_stock')
         ).select_related(
             'category',
-            'workshop_unit'
         ).order_by('available_stock')[:limit]
         
         return [
@@ -44,7 +43,6 @@ class DashboardWidgets:
                 'current_stock': p.available_stock,
                 'minimum_stock': p.minimum_stock,
                 'category': p.category.name,
-                'workshop': p.workshop_unit.name,
                 'is_critical': p.available_stock == 0,
             }
             for p in products

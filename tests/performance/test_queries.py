@@ -28,7 +28,6 @@ def setup_large_dataset(db):
     product = Product.objects.create(
         name='Wrench',
         category=category,
-        workshop_unit=workshop,
         unit_of_measure=uom,
         minimum_stock=50
     )
@@ -39,6 +38,7 @@ def setup_large_dataset(db):
         items.append(
             ItemInstance(
                 product=product,
+                    workshop_unit=workshop,
                 serial_number=f'PERF-{i:04d}',
                 barcode=f'{product.sku_code}-PERF-{i:04d}',
                 location=location,
@@ -71,7 +71,7 @@ class TestQueryCounts:
             items = ItemInstance.objects.select_related(
                 'product',
                 'product__category',
-                'product__workshop_unit',
+                'workshop_unit',
                 'location'
             ).prefetch_related(
                 'transaction_set',
@@ -200,12 +200,14 @@ class TestBulkOperationPerformance:
         """Test bulk create is efficient."""
         product = setup_large_dataset['product']
         location = setup_large_dataset['location']
+        workshop = setup_large_dataset['workshop']
         
         # Bulk create should use only 1 INSERT query
         with django_assert_max_num_queries(3):  # 1 for product check, 1 for location check, 1 for bulk insert
             items = [
                 ItemInstance(
                     product=product,
+                    workshop_unit=workshop,
                     serial_number=f'BULK-{i:04d}',
                     barcode=f'{product.sku_code}-BULK-{i:04d}',
                     location=location,

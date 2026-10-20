@@ -34,7 +34,6 @@ def product(db, category, workshop_unit, unit_of_measure):
     product = Product.objects.create(
         name='Adjustable Wrench',
         category=category,
-        workshop_unit=workshop_unit,
         unit_of_measure=unit_of_measure,
         is_consumable=False,
         minimum_stock=5
@@ -133,6 +132,7 @@ class TestItemInstanceBarcodeGeneration:
     def test_barcode_auto_generated_on_create(self, product, location):
         """Test barcode is automatically generated when item is created."""
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='AUTO-001',
             location=location,
@@ -148,6 +148,7 @@ class TestItemInstanceBarcodeGeneration:
     def test_barcode_image_auto_generated(self, product, location):
         """Test barcode image is automatically generated."""
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='IMG-001',
             location=location,
@@ -166,6 +167,7 @@ class TestItemInstanceBarcodeGeneration:
         items = []
         for i in range(5):
             item = ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=product,
                 serial_number=f'UNIQ-{i:03d}',
                 location=location,
@@ -180,6 +182,7 @@ class TestItemInstanceBarcodeGeneration:
     def test_barcode_persists_after_status_change(self, product, location):
         """Test barcode doesn't change when item status changes."""
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='PERSIST-001',
             location=location,
@@ -204,6 +207,7 @@ class TestBarcodeValidation:
         """Test barcode generation with very long serial number."""
         long_serial = 'A' * 100
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number=long_serial,
             location=location,
@@ -219,6 +223,7 @@ class TestBarcodeValidation:
         # but we should handle it gracefully
         serial = 'TEST-123'  # Using ASCII for actual barcode compatibility
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number=serial,
             location=location,
@@ -235,6 +240,7 @@ class TestBarcodeImageStorage:
     def test_barcode_image_saved_to_correct_path(self, product, location):
         """Test barcode image is saved to correct media path."""
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='PATH-001',
             location=location,
@@ -247,6 +253,7 @@ class TestBarcodeImageStorage:
     def test_barcode_image_file_format(self, product, location):
         """Test barcode image is saved in correct format."""
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='FORMAT-001',
             location=location,
@@ -261,6 +268,7 @@ class TestBarcodeImageStorage:
         items = []
         for i in range(3):
             item = ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=product,
                 serial_number=f'FILE-{i:03d}',
                 location=location,
@@ -279,6 +287,7 @@ class TestBarcodeRegeneration:
     def test_regenerate_barcode_after_serial_change(self, product, location):
         """Test barcode updates when serial number changes."""
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='ORIG-001',
             location=location,

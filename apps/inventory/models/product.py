@@ -27,12 +27,6 @@ class Product(models.Model):
         verbose_name='دسته‌بندی',
         help_text='دسته‌بندی محصول'
     )
-    workshop_unit = models.ForeignKey(
-        'inventory.WorkshopUnit',
-        on_delete=models.PROTECT,
-        verbose_name='واحد کارگاهی',
-        help_text='واحد کارگاهی مربوطه'
-    )
     unit_of_measure = models.ForeignKey(
         'inventory.UnitOfMeasure',
         on_delete=models.PROTECT,
@@ -80,7 +74,6 @@ class Product(models.Model):
             models.Index(fields=['name']),
             models.Index(fields=['sku_code']),
             models.Index(fields=['category']),
-            models.Index(fields=['workshop_unit']),
             models.Index(fields=['is_consumable']),
         ]
     
@@ -93,7 +86,7 @@ class Product(models.Model):
 
         Flow:
         1) Insert row first to get primary key.
-        2) Build deterministic SKU: WORKSHOP-CATEGORY-<id:06d>
+        2) Build deterministic SKU: PRD-CATEGORY-<id:06d>
         3) Persist SKU with minimal update.
         """
         is_new = self.pk is None
@@ -113,7 +106,7 @@ class Product(models.Model):
                 )
     
     def _generate_sku(self) -> str:
-        """Generate SKU code in format: WORKSHOP-CATEGORY-ID."""
+        """Generate a workshop-independent SKU for new products."""
         from core.services.sku_service import SKUService
 
         return SKUService.generate_sku(self)

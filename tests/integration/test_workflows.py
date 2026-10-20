@@ -30,7 +30,6 @@ def setup_workshop(db):
     product = Product.objects.create(
         name='Adjustable Wrench',
         category=category,
-        workshop_unit=workshop,
         unit_of_measure=uom,
         minimum_stock=5,
         is_consumable=False
@@ -41,6 +40,7 @@ def setup_workshop(db):
     for i in range(10):
         item = ItemInstance.objects.create(
             product=product,
+            workshop_unit=workshop,
             serial_number=f'WRN-{i:03d}',
             location=location,
             status='available'
@@ -326,10 +326,10 @@ class TestCSVImportWorkflow:
         product = setup_workshop['product']
         location = setup_workshop['location']
         
-        csv_content = f"""product_sku,serial_number,location
-{product.sku_code},CSV-001,{location.name}
-{product.sku_code},CSV-002,{location.name}
-{product.sku_code},CSV-003,{location.name}"""
+        csv_content = f"""product_sku,serial_number,location,workshop_unit
+{product.sku_code},CSV-001,{location.name},COL
+{product.sku_code},CSV-002,{location.name},COL
+{product.sku_code},CSV-003,{location.name},COL"""
         
         initial_count = ItemInstance.objects.filter(product=product).count()
         
@@ -361,9 +361,9 @@ class TestCSVImportWorkflow:
         admin = setup_workshop['admin']
         
         # Import items
-        csv_content = f"""product_sku,serial_number,location
-{product.sku_code},IMPORT-001,{location.name}
-{product.sku_code},IMPORT-002,{location.name}"""
+        csv_content = f"""product_sku,serial_number,location,workshop_unit
+{product.sku_code},IMPORT-001,{location.name},COL
+{product.sku_code},IMPORT-002,{location.name},COL"""
         
         result = CSVImportService.import_items(csv_content)
         assert result['success'] is True

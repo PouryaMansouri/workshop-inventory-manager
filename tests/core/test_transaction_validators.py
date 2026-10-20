@@ -26,7 +26,6 @@ def setup_data(db):
     product = Product.objects.create(
         name='Wrench',
         category=category,
-        workshop_unit=workshop,
         unit_of_measure=uom,
         minimum_stock=5,
         is_consumable=False
@@ -35,13 +34,13 @@ def setup_data(db):
     consumable = Product.objects.create(
         name='Screws',
         category=category,
-        workshop_unit=workshop,
         unit_of_measure=uom,
         minimum_stock=100,
         is_consumable=True
     )
     
     item = ItemInstance.objects.create(
+        workshop_unit=WorkshopUnit.objects.first(),
         product=product,
         serial_number='TEST-001',
         location=location,
@@ -49,6 +48,7 @@ def setup_data(db):
     )
     
     consumable_item = ItemInstance.objects.create(
+        workshop_unit=WorkshopUnit.objects.first(),
         product=consumable,
         serial_number='CONS-001',
         location=location,

@@ -31,9 +31,9 @@ def test_sku_repair_updates_items_only_in_fix_mode():
     unit = UnitOfMeasure.objects.create(name='Piece', symbol='pcs')
     location = Location.objects.create(name='Shelf')
     product = Product.objects.create(
-        name='Wrench', category=category, workshop_unit=workshop, unit_of_measure=unit,
+        name='Wrench', category=category, unit_of_measure=unit,
     )
-    item = ItemInstance.objects.create(product=product, serial_number='SERIAL', location=location)
+    item = ItemInstance.objects.create(workshop_unit=WorkshopUnit.objects.first(), product=product, serial_number='SERIAL', location=location)
     expected_sku = product.sku_code
     Product.objects.filter(pk=product.pk).update(sku_code='WRONG')
     ItemInstance.objects.filter(pk=item.pk).update(barcode='WRONG-SERIAL')
@@ -52,3 +52,26 @@ def test_sku_repair_updates_items_only_in_fix_mode():
     assert product.sku_code == expected_sku
     assert item.barcode == f'{expected_sku}-SERIAL'
     assert item.barcode_image
+
+
+@pytest.mark.django_db
+def test_sku_repair_preserves_legacy_workshop_prefix():
+    workshop = WorkshopUnit.objects.create(name='Workshop', code='WRK')
+    category = Category.objects.create(name='Tools', code='TLS')
+    unit = UnitOfMeasure.objects.create(name='Piece', symbol='pcs')
+    location = Location.objects.create(name='Shelf')
+    product = Product.objects.create(name='Wrench', category=category, unit_of_measure=unit)
+    legacy_sku = f'WRK-TLS-{product.pk:06d}'
+    Product.objects.filter(pk=product.pk).update(sku_code=legacy_sku)
+    product.refresh_from_db()
+    item = ItemInstance.objects.create(
+        product=product, workshop_unit=workshop, serial_number='A', location=location,
+    )
+
+    output = StringIO()
+    call_command('repair_product_skus', fix=True, product_id=product.pk, stdout=output)
+    product.refresh_from_db()
+    item.refresh_from_db()
+    assert product.sku_code == legacy_sku
+    assert item.barcode == f'{legacy_sku}-A'
+    assert 'invalid=0' in output.getvalue()

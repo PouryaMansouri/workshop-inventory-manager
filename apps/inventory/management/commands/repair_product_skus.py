@@ -24,7 +24,7 @@ class Command(BaseCommand):
         fix = options["fix"]
         product_id = options.get("product_id")
 
-        qs = Product.objects.select_related("workshop_unit", "category").order_by("id")
+        qs = Product.objects.select_related("category").order_by("id")
         if product_id:
             qs = qs.filter(id=product_id)
 
@@ -53,7 +53,17 @@ class Command(BaseCommand):
                     fixed += 1
                 continue
 
-            if current != expected:
+            # Existing SKUs include the workshop prefix. Keep them stable so
+            # already printed item barcodes continue to work after migration.
+            legacy_parts = current.split('-')
+            legacy_sku = (
+                len(legacy_parts) == 3
+                and legacy_parts[0] != 'PRD'
+                and bool(legacy_parts[0])
+                and bool(legacy_parts[1])
+                and legacy_parts[2] == str(product.id).zfill(6)
+            )
+            if current != expected and not legacy_sku:
                 invalid += 1
                 self.stdout.write(
                     self.style.WARNING(

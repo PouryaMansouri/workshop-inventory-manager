@@ -89,7 +89,6 @@ class StockService:
             available_count__lt=F('minimum_stock')
         ).select_related(
             'category',
-            'workshop_unit',
             'unit_of_measure'
         )
     
@@ -112,6 +111,5 @@ class StockService:
             available_count=0
         ).select_related(
             'category',
-            'workshop_unit',
             'unit_of_measure'
         )

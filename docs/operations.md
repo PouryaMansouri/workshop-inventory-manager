@@ -219,10 +219,10 @@ Actions Taken:
 
 **Prepare CSV File:**
 ```csv
-product_sku,serial_number,location
-COL-WRN-001,NEW-001,Main Warehouse
-COL-WRN-001,NEW-002,Main Warehouse
-COL-WRN-001,NEW-003,Shelf A
+product_sku,serial_number,location,workshop_unit
+PRD-WRN-000001,NEW-001,Main Warehouse,COL
+PRD-WRN-000001,NEW-002,Main Warehouse,COL
+PRD-WRN-000001,NEW-003,Shelf A,COL
 ```
 
 **Import Process:**
@@ -370,8 +370,8 @@ COL-WRN-001,NEW-003,Shelf A
 **SKU Logic:**
 1. Product is inserted first to get `id`.
 2. SKU is generated deterministically:
-   - `WORKSHOP_CODE-CATEGORY_CODE-<PRODUCT_ID_PADDED_6>`
-   - Example: `MECH-WRENCH-000123`
+   - `PRD-CATEGORY_CODE-<PRODUCT_ID_PADDED_6>`
+   - Example: `PRD-WRENCH-000123`
 3. SKU is saved on the same product row.
 
 **How to detect:**
@@ -382,6 +382,8 @@ python manage.py repair_product_skus --settings=config.settings.local
 This reports:
 - `MISSING`: empty `sku_code`
 - `INVALID`: `sku_code` differs from expected deterministic value
+
+Existing SKUs with a workshop prefix are preserved, along with their printed barcodes.
 
 **How to rerun/retry and fix:**
 ```bash
@@ -424,7 +426,7 @@ python manage.py repair_product_skus --settings=config.settings.local --product-
    - Verify location exists
    - Create location if needed
 4. Invalid CSV format
-   - Check header row: `product_sku,serial_number,location`
+   - Check header row: `product_sku,serial_number,location,workshop_unit`
    - Check for extra columns
    - Check for encoding issues (use UTF-8)
 

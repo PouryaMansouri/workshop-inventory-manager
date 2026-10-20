@@ -17,7 +17,7 @@ erDiagram
     Category ||--o{ Category : "parent"
     Category ||--o{ Product : "has"
     
-    WorkshopUnit ||--o{ Product : "belongs to"
+    WorkshopUnit ||--o{ ItemInstance : "assigned to"
     
     UnitOfMeasure ||--o{ Product : "measured in"
     
@@ -72,7 +72,6 @@ erDiagram
         bigint id PK
         varchar name
         bigint category_id FK
-        bigint workshop_unit_id FK
         bigint unit_of_measure_id FK
         text description
         boolean is_consumable
@@ -85,6 +84,7 @@ erDiagram
     ItemInstance {
         bigint id PK
         bigint product_id FK
+        bigint workshop_unit_id FK
         varchar serial_number
         varchar barcode UK
         varchar barcode_image
@@ -230,7 +230,6 @@ Stores tool types/templates.
 | id | BIGSERIAL | PRIMARY KEY | Auto-increment ID |
 | name | VARCHAR(300) | NOT NULL | Product name |
 | category_id | BIGINT | NOT NULL, FOREIGN KEY | Category reference |
-| workshop_unit_id | BIGINT | NOT NULL, FOREIGN KEY | Workshop unit reference |
 | unit_of_measure_id | BIGINT | NOT NULL, FOREIGN KEY | Unit of measure reference |
 | description | TEXT | NULL | Product description |
 | is_consumable | BOOLEAN | NOT NULL, DEFAULT FALSE | Consumable flag |
@@ -244,17 +243,15 @@ Stores tool types/templates.
 - UNIQUE INDEX on `sku_code`
 - INDEX on `name`
 - INDEX on `category_id`
-- INDEX on `workshop_unit_id`
 - INDEX on `is_consumable`
 
 **Constraints:**
 - FOREIGN KEY `category_id` REFERENCES `inventory_category(id)` ON DELETE PROTECT
-- FOREIGN KEY `workshop_unit_id` REFERENCES `inventory_workshopunit(id)` ON DELETE PROTECT
 - FOREIGN KEY `unit_of_measure_id` REFERENCES `inventory_unitofmeasure(id)` ON DELETE PROTECT
 - CHECK: `minimum_stock >= 0`
 
-**SKU Format:** `{workshop_code}-{category_code}-{padded_id}`  
-**Example:** `COL-WRN-001`
+**New SKU Format:** `PRD-{category_code}-{padded_id}`
+**Example:** `PRD-WRN-000001`. Existing workshop-prefixed SKUs remain unchanged.
 
 ---
 
@@ -266,6 +263,7 @@ Stores individual physical tools.
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PRIMARY KEY | Auto-increment ID |
 | product_id | BIGINT | NOT NULL, FOREIGN KEY | Product reference |
+| workshop_unit_id | BIGINT | NOT NULL, FOREIGN KEY | Workshop assignment |
 | serial_number | VARCHAR(100) | NOT NULL | Serial number |
 | barcode | VARCHAR(200) | NOT NULL, UNIQUE | Auto-generated barcode |
 | barcode_image | VARCHAR(200) | NULL | Barcode image path |
@@ -279,18 +277,24 @@ Stores individual physical tools.
 - UNIQUE INDEX on `barcode`
 - INDEX on `serial_number`
 - INDEX on `product_id`
+- INDEX on `workshop_unit_id`
 - INDEX on `location_id`
 - INDEX on `status`
 - COMPOSITE INDEX on `(product_id, status)` - for stock calculation
 
 **Constraints:**
 - FOREIGN KEY `product_id` REFERENCES `inventory_product(id)` ON DELETE PROTECT
+- FOREIGN KEY `workshop_unit_id` REFERENCES `inventory_workshopunit(id)` ON DELETE PROTECT
 - FOREIGN KEY `location_id` REFERENCES `inventory_location(id)` ON DELETE PROTECT
 - CHECK: `status IN ('available', 'checked_out', 'maintenance', 'lost', 'damaged')`
 - UNIQUE CONSTRAINT on `(product_id, serial_number)`
 
 **Barcode Format:** `{sku}-{serial_number}`  
-**Example:** `COL-WRN-001-4512`
+**Example:** `PRD-WRN-000001-4512`
+
+When a new item is saved without a serial number, the next numeric serial for
+that product is assigned automatically across all workshop units. Existing
+numeric padding is retained; a supplied serial number is kept as entered.
 
 ---
 
@@ -751,7 +755,7 @@ All admin querysets use `select_related()` to avoid N+1 queries:
 queryset = ItemInstance.objects.select_related(
     'product',
     'product__category',
-    'product__workshop_unit',
+    'workshop_unit',
     'location'
 )
 ```

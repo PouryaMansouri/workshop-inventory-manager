@@ -44,7 +44,6 @@ def product(db, category, workshop_unit, unit_of_measure):
     return Product.objects.create(
         name='Adjustable Wrench',
         category=category,
-        workshop_unit=workshop_unit,
         unit_of_measure=unit_of_measure,
         is_consumable=False,
         minimum_stock=5
@@ -85,6 +84,7 @@ class TestGetAvailableStock:
         # Create 5 available items
         for i in range(5):
             ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=product,
                 serial_number=f'SN-{i}',
                 location=location,
@@ -100,6 +100,7 @@ class TestGetAvailableStock:
         items = []
         for i in range(10):
             item = ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=product,
                 serial_number=f'SN-{i}',
                 location=location,
@@ -150,6 +151,7 @@ class TestIsLowStock:
         # Create only 3 items
         for i in range(3):
             ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=product,
                 serial_number=f'SN-{i}',
                 location=location,
@@ -163,6 +165,7 @@ class TestIsLowStock:
         # Create exactly 5 items (minimum_stock)
         for i in range(5):
             ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=product,
                 serial_number=f'SN-{i}',
                 location=location,
@@ -177,6 +180,7 @@ class TestIsLowStock:
         # Create 10 items
         for i in range(10):
             ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=product,
                 serial_number=f'SN-{i}',
                 location=location,
@@ -202,12 +206,12 @@ class TestGetLowStockProducts:
         p1 = Product.objects.create(
             name='Product 1',
             category=category,
-            workshop_unit=workshop_unit,
             unit_of_measure=unit_of_measure,
             minimum_stock=5
         )
         for i in range(2):
             ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=p1,
                 serial_number=f'P1-{i}',
                 location=location,
@@ -219,12 +223,12 @@ class TestGetLowStockProducts:
         p2 = Product.objects.create(
             name='Product 2',
             category=category,
-            workshop_unit=workshop_unit,
             unit_of_measure=unit_of_measure,
             minimum_stock=5
         )
         for i in range(10):
             ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=p2,
                 serial_number=f'P2-{i}',
                 location=location,
@@ -235,7 +239,6 @@ class TestGetLowStockProducts:
         p3 = Product.objects.create(
             name='Product 3',
             category=category,
-            workshop_unit=workshop_unit,
             unit_of_measure=unit_of_measure,
             minimum_stock=3
         )
@@ -260,6 +263,7 @@ class TestGetStockByStatus:
         items = []
         for i in range(10):
             item = ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=product,
                 serial_number=f'SN-{i}',
                 location=location,
@@ -316,6 +320,7 @@ class TestGetTotalStock:
         items = []
         for i in range(5):
             item = ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=product,
                 serial_number=f'SN-{i}',
                 location=location,
@@ -353,11 +358,13 @@ class TestStockCalculationPerformance:
     def test_large_dataset_performance(self, product, location):
         """Test stock calculation with large number of items."""
         # Create 1000 items
+        workshop = WorkshopUnit.objects.first()
         items = []
         for i in range(1000):
             items.append(
                 ItemInstance(
                     product=product,
+                    workshop_unit=workshop,
                     serial_number=f'SN-{i:04d}',
                     barcode=f'{product.sku_code}-SN-{i:04d}',
                     location=location,

@@ -32,6 +32,7 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
         'barcode',
         'serial_number',
         'product',
+        'workshop_unit',
         'status_badge',
         'location',
         'current_holder',
@@ -44,7 +45,7 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
         CurrentHolderFilter,
         'location',
         'product__category',
-        'product__workshop_unit',
+        'workshop_unit',
         'created_at',
     ]
     
@@ -55,7 +56,7 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
         'product__sku_code',
     ]
     
-    autocomplete_fields = ['product', 'location']
+    autocomplete_fields = ['product', 'workshop_unit', 'location']
     
     readonly_fields = [
         'barcode',
@@ -70,7 +71,7 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
     
     fieldsets = (
         ('اطلاعات اصلی', {
-            'fields': ('product', 'serial_number', 'location', 'status')
+            'fields': ('product', 'workshop_unit', 'serial_number', 'location', 'status')
         }),
         ('بارکد', {
             'fields': ('barcode', 'barcode_image_display'),
@@ -104,6 +105,13 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
         'mark_as_available',
         'mark_as_maintenance',
     ]
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj is not None and 'serial_number' in form.base_fields:
+            form.base_fields['serial_number'].required = True
+            form.base_fields['serial_number'].help_text = 'شماره سریال این نمونه ابزار'
+        return form
     
     def get_queryset(self, request):
         """Optimize queryset with select_related."""
@@ -111,7 +119,7 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
         return qs.select_related(
             'product',
             'product__category',
-            'product__workshop_unit',
+            'workshop_unit',
             'location'
         ).prefetch_related(
             'transaction_set',
@@ -347,7 +355,7 @@ class ItemInstanceAdmin(InventoryActionsMixin, admin.ModelAdmin):
         class CSVUploadForm(forms.Form):
             csv_file = forms.FileField(
                 label='فایل CSV',
-                help_text='فرمت: product_sku,serial_number,location'
+                help_text='فرمت: product_sku,serial_number,location,workshop_unit (کد واحد کارگاهی)'
             )
         
         if 'csv_file' in request.FILES:

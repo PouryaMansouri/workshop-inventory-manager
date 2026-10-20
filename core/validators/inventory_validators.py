@@ -197,8 +197,8 @@ class InventoryValidators:
         """
         Validate SKU code format.
         
-        Expected format: WORKSHOP-CATEGORY-ID
-        Example: COL-WRN-001
+        Expected format: PREFIX-CATEGORY-ID. New products use PRD as prefix;
+        existing workshop-prefixed SKUs remain valid.
         
         Args:
             sku_code: SKU code to validate
@@ -213,12 +213,12 @@ class InventoryValidators:
         if len(parts) != 3:
             raise ValidationError(
                 f"SKU code '{sku_code}' has invalid format. "
-                "Expected format: WORKSHOP-CATEGORY-ID"
+                "Expected format: PREFIX-CATEGORY-ID"
             )
         
-        workshop_code, category_code, item_id = parts
+        prefix, category_code, item_id = parts
         
-        if not workshop_code or not category_code or not item_id:
+        if not prefix or not category_code or not item_id:
             raise ValidationError(
                 "SKU code parts cannot be empty."
             )
@@ -241,11 +241,6 @@ class InventoryValidators:
         """
         if not serial_number:
             raise ValidationError("Serial number cannot be empty.")
-        
-        if len(serial_number) < 3:
-            raise ValidationError(
-                "Serial number must be at least 3 characters long."
-            )
         
         if len(serial_number) > 100:
             raise ValidationError(

@@ -15,7 +15,7 @@ def inventory(db):
     unit = UnitOfMeasure.objects.create(name='Piece', symbol='pcs')
     location = Location.objects.create(name='Shelf')
     product = Product.objects.create(
-        name='Wrench', category=category, workshop_unit=workshop,
+        name='Wrench', category=category,
         unit_of_measure=unit, minimum_stock=2,
     )
     return product, location
@@ -24,13 +24,14 @@ def inventory(db):
 def test_product_and_repair_service_use_the_same_sku(inventory):
     product, _ = inventory
     assert product.sku_code == SKUService.generate_sku(product)
-    assert product.sku_code.startswith('WRK-TLS-')
+    assert product.sku_code.startswith('PRD-TLS-')
 
 
 def test_inventory_selector_counts_only_available_items(inventory):
     product, location = inventory
-    ItemInstance.objects.create(product=product, serial_number='A', location=location)
+    ItemInstance.objects.create(workshop_unit=WorkshopUnit.objects.first(), product=product, serial_number='A', location=location)
     ItemInstance.objects.create(
+        workshop_unit=WorkshopUnit.objects.first(),
         product=product, serial_number='B', location=location, status='maintenance',
     )
     assert list(InventorySelector.get_available_items(product).values_list('serial_number', flat=True)) == ['A']
@@ -40,9 +41,9 @@ def test_inventory_selector_counts_only_available_items(inventory):
 def test_csv_import_rolls_back_earlier_rows_when_later_insert_fails(inventory):
     product, location = inventory
     csv_content = (
-        'product_sku,serial_number,location\n'
-        f'{product.sku_code},DUPLICATE,{location.name}\n'
-        f'{product.sku_code},DUPLICATE,{location.name}'
+        'product_sku,serial_number,location,workshop_unit\n'
+        f'{product.sku_code},DUPLICATE,{location.name},wrk\n'
+        f'{product.sku_code},DUPLICATE,{location.name},wrk'
     )
 
     result = CSVImportService.import_items(csv_content)
@@ -54,7 +55,7 @@ def test_csv_import_rolls_back_earlier_rows_when_later_insert_fails(inventory):
 
 def test_printable_labels_are_a_pdf(inventory):
     product, location = inventory
-    item = ItemInstance.objects.create(product=product, serial_number='PDF-1', location=location)
+    item = ItemInstance.objects.create(workshop_unit=WorkshopUnit.objects.first(), product=product, serial_number='PDF-1', location=location)
 
     document = LabelService.generate_labels([item])
 

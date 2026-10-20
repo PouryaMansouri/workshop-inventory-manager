@@ -19,10 +19,10 @@ def test_overdue_repairs_and_statistics_exclude_completed_work():
     unit = UnitOfMeasure.objects.create(name='Piece', symbol='pcs')
     location = Location.objects.create(name='Shelf')
     product = Product.objects.create(
-        name='Wrench', category=category, workshop_unit=workshop, unit_of_measure=unit,
+        name='Wrench', category=category, unit_of_measure=unit,
     )
-    old_item = ItemInstance.objects.create(product=product, serial_number='OLD', location=location)
-    fixed_item = ItemInstance.objects.create(product=product, serial_number='FIXED', location=location)
+    old_item = ItemInstance.objects.create(workshop_unit=WorkshopUnit.objects.first(), product=product, serial_number='OLD', location=location)
+    fixed_item = ItemInstance.objects.create(workshop_unit=WorkshopUnit.objects.first(), product=product, serial_number='FIXED', location=location)
     old_date = timezone.now() - timedelta(days=40)
     overdue = MaintenanceLog.objects.create(
         item=old_item, reported_by=reporter, description='Broken handle',

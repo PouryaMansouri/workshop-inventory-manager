@@ -104,7 +104,7 @@ class TransactionAdmin(admin.ModelAdmin):
             'item',
             'item__product',
             'item__product__category',
-            'item__product__workshop_unit',
+            'item__workshop_unit',
             'user',
             'created_by'
         )

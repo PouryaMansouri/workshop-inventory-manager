@@ -15,8 +15,8 @@ class SKUService:
         """
         Generate SKU code for a product.
         
-        Format: {workshop_code}-{category_code}-{padded_id}
-        Example: COL-WRN-000001
+        Format: PRD-{category_code}-{padded_id}
+        Example: PRD-WRN-000001
         
         Args:
             product: Product instance
@@ -27,8 +27,7 @@ class SKUService:
         if not product.id:
             raise ValueError('Product must be saved before generating SKU')
         
-        workshop_code = product.workshop_unit.code.upper()
         category_code = product.category.code.upper()
         padded_id = str(product.id).zfill(6)
         
-        return f'{workshop_code}-{category_code}-{padded_id}'
+        return f'PRD-{category_code}-{padded_id}'

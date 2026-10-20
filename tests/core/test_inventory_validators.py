@@ -22,13 +22,13 @@ def setup_data(db):
     product = Product.objects.create(
         name='Wrench',
         category=category,
-        workshop_unit=workshop,
         unit_of_measure=uom,
         minimum_stock=5,
         is_consumable=False
     )
     
     item = ItemInstance.objects.create(
+        workshop_unit=WorkshopUnit.objects.first(),
         product=product,
         serial_number='TEST-001',
         location=location,
@@ -281,12 +281,9 @@ class TestValidateSerialNumberFormat:
         
         assert 'cannot be empty' in str(exc.value).lower()
     
-    def test_too_short_serial_number(self):
-        """Test validation fails for too short serial number."""
-        with pytest.raises(ValidationError) as exc:
-            InventoryValidators.validate_serial_number_format('AB')
-        
-        assert 'at least 3 characters' in str(exc.value).lower()
+    def test_single_digit_serial_number(self):
+        """Auto-generated serials start at 1."""
+        InventoryValidators.validate_serial_number_format('1')
     
     def test_too_long_serial_number(self):
         """Test validation fails for too long serial number."""
@@ -373,6 +370,7 @@ class TestValidateProductConsumableFlag:
         """Test validation fails when items are checked out."""
         # Create another item and mark as checked out
         item2 = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=setup_data['product'],
             serial_number='TEST-002',
             location=setup_data['location'],

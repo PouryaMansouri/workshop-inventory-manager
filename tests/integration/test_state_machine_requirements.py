@@ -22,7 +22,6 @@ def setup_sm(db):
     product = Product.objects.create(
         name='Adjustable Wrench',
         category=category,
-        workshop_unit=workshop,
         unit_of_measure=uom,
         minimum_stock=5,
         is_consumable=False,
@@ -31,19 +30,20 @@ def setup_sm(db):
     consumable = Product.objects.create(
         name='Grease',
         category=category,
-        workshop_unit=workshop,
         unit_of_measure=uom,
         minimum_stock=10,
         is_consumable=True,
     )
 
     item = ItemInstance.objects.create(
+        workshop_unit=WorkshopUnit.objects.first(),
         product=product,
         serial_number='SM-001',
         location=location,
         status='available',
     )
     consumable_item = ItemInstance.objects.create(
+        workshop_unit=WorkshopUnit.objects.first(),
         product=consumable,
         serial_number='SM-C-001',
         location=location,

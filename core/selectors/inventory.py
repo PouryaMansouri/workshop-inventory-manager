@@ -25,7 +25,6 @@ class InventorySelector:
             available_count__lt=F('minimum_stock')
         ).select_related(
             'category',
-            'workshop_unit',
             'unit_of_measure'
         ).order_by('available_count')
     
@@ -38,7 +37,7 @@ class InventorySelector:
         if product is not None:
             queryset = queryset.filter(product=product)
         return queryset.select_related(
-            'location', 'product', 'product__category', 'product__workshop_unit'
+            'location', 'product', 'product__category', 'workshop_unit'
         )
     
     @staticmethod
@@ -51,5 +50,5 @@ class InventorySelector:
         ).select_related(
             'product',
             'product__category',
-            'product__workshop_unit'
+            'workshop_unit'
         )

@@ -1,7 +1,8 @@
 """
 ItemInstance model for individual physical tools.
 """
-from django.db import models
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
 from simple_history.models import HistoricalRecords
 
 
@@ -27,10 +28,17 @@ class ItemInstance(models.Model):
         verbose_name='محصول',
         help_text='نوع محصول/ابزار'
     )
+    workshop_unit = models.ForeignKey(
+        'inventory.WorkshopUnit',
+        on_delete=models.PROTECT,
+        verbose_name='واحد کارگاهی',
+        help_text='واحد کارگاهی این نمونه ابزار'
+    )
     serial_number = models.CharField(
         max_length=100,
+        blank=True,
         verbose_name='شماره سریال',
-        help_text='شماره سریال یکتای ابزار'
+        help_text='برای شماره‌گذاری خودکار، خالی بگذارید؛ شماره بعدی این محصول ثبت می‌شود.'
     )
     barcode = models.CharField(
         max_length=200,
@@ -78,6 +86,7 @@ class ItemInstance(models.Model):
             models.Index(fields=['serial_number']),
             models.Index(fields=['barcode']),
             models.Index(fields=['product']),
+            models.Index(fields=['workshop_unit']),
             models.Index(fields=['location']),
             models.Index(fields=['status']),
             models.Index(fields=['product', 'status']),  # Composite for stock calculation
@@ -93,6 +102,33 @@ class ItemInstance(models.Model):
         return f'{self.product.name} - {self.serial_number} ({self.get_status_display()})'
     
     def save(self, *args, **kwargs) -> None:
+        """Assign the next product serial when blank, then sync the barcode."""
+        if not self.serial_number or not self.serial_number.strip():
+            if not self._state.adding:
+                raise ValidationError({'serial_number': 'شماره سریال نمونهٔ ثبت‌شده نمی‌تواند خالی باشد.'})
+            from apps.inventory.models import Product
+
+            database = self._state.db or self.product._state.db or 'default'
+            with transaction.atomic(using=database):
+                # Serialize automatic allocations for the same product on
+                # databases with row-level locking (including PostgreSQL).
+                Product.objects.using(database).select_for_update().get(pk=self.product_id)
+                existing = type(self).objects.using(database).filter(
+                    product_id=self.product_id
+                ).values_list('serial_number', flat=True)
+                next_number = 1
+                width = 1
+                for value in existing.iterator():
+                    if value and value.isdecimal():
+                        next_number = max(next_number, int(value) + 1)
+                        width = max(width, len(value))
+                self.serial_number = str(next_number).zfill(width)
+                self._save_with_barcode(*args, **kwargs)
+            return
+
+        self._save_with_barcode(*args, **kwargs)
+
+    def _save_with_barcode(self, *args, **kwargs) -> None:
         """Keep the barcode and its image in sync with the product and serial."""
         from core.services.barcode_service import BarcodeService
 
@@ -101,7 +137,7 @@ class ItemInstance(models.Model):
         if barcode_changed:
             self.barcode = expected_barcode
             if kwargs.get('update_fields') is not None:
-                kwargs['update_fields'] = set(kwargs['update_fields']) | {'barcode'}
+                kwargs['update_fields'] = set(kwargs['update_fields']) | {'barcode', 'serial_number'}
 
         super().save(*args, **kwargs)
         if barcode_changed or not self.barcode_image:

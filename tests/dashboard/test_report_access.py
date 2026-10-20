@@ -28,12 +28,14 @@ def test_my_tools_shows_only_the_signed_in_holder(client):
     unit = UnitOfMeasure.objects.create(name='Piece', symbol='pcs')
     location = Location.objects.create(name='Shelf')
     product = Product.objects.create(
-        name='Wrench', category=category, workshop_unit=workshop, unit_of_measure=unit,
+        name='Wrench', category=category, unit_of_measure=unit,
     )
     own_item = ItemInstance.objects.create(
+        workshop_unit=WorkshopUnit.objects.first(),
         product=product, serial_number='OWN', location=location, status='checked_out',
     )
     other_item = ItemInstance.objects.create(
+        workshop_unit=WorkshopUnit.objects.first(),
         product=product, serial_number='OTHER', location=location, status='checked_out',
     )
     for item, holder in ((own_item, viewer), (other_item, other)):

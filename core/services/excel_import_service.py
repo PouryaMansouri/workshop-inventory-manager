@@ -159,7 +159,6 @@ class ExcelImportService:
                 defaults={
                     "name": name_s,
                     "category": category,
-                    "workshop_unit": workshop,
                     "unit_of_measure": default_uom,
                     "minimum_stock": 0,
                     "is_consumable": False,
@@ -173,6 +172,7 @@ class ExcelImportService:
                 serial_number="001",
                 defaults={
                     "location": location,
+                    "workshop_unit": workshop,
                     "status": "available",
                 },
             )

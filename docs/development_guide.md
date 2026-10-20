@@ -295,7 +295,6 @@ category = Category.objects.create(
 product = Product.objects.create(
     name='10mm Wrench',
     category=category,
-    workshop_unit=workshop,
     unit_of_measure=uom,
     minimum_stock=5
 )
@@ -515,12 +514,11 @@ Common fixtures are defined in `conftest.py`:
 
 ```python
 @pytest.fixture
-def product(db, category, workshop_unit, unit_of_measure):
+def product(db, category, unit_of_measure):
     """Create a test product."""
     return Product.objects.create(
         name='Test Product',
         category=category,
-        workshop_unit=workshop_unit,
         unit_of_measure=unit_of_measure,
         minimum_stock=5
     )
@@ -565,9 +563,9 @@ Tests should be run:
 
 1. Prepare CSV file with format:
 ```csv
-product_sku,serial_number,location
-COL-WRN-001,12345,Main Warehouse
-COL-WRN-001,12346,Shelf A
+product_sku,serial_number,location,workshop_unit
+PRD-WRN-000001,12345,Main Warehouse,COL
+PRD-WRN-000001,12346,Shelf A,COL
 ```
 
 2. In Django Admin:
@@ -580,7 +578,7 @@ COL-WRN-001,12346,Shelf A
 
 - Product SKU must exist
 - Serial numbers must be unique
-- Location is optional
+- Location and workshop unit are required
 - All rows validated before import
 - Transaction rollback on error
 
@@ -588,17 +586,17 @@ COL-WRN-001,12346,Shelf A
 
 #### Basic Import
 ```csv
-product_sku,serial_number,location
-COL-WRN-001,SN-001,Main Warehouse
-COL-WRN-001,SN-002,Main Warehouse
-ELC-SCR-002,SN-003,Shelf A
+product_sku,serial_number,location,workshop_unit
+PRD-WRN-000001,SN-001,Main Warehouse,COL
+PRD-WRN-000001,SN-002,Main Warehouse,COL
+PRD-SCR-000002,SN-003,Shelf A,ELC
 ```
 
-#### Without Location
+#### Missing Location (rejected)
 ```csv
-product_sku,serial_number,location
-COL-WRN-001,SN-004,
-COL-WRN-001,SN-005,
+product_sku,serial_number,location,workshop_unit
+PRD-WRN-000001,SN-004,,COL
+PRD-WRN-000001,SN-005,,COL
 ```
 
 ## PDF Label Generation

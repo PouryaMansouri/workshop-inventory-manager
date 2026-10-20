@@ -25,12 +25,12 @@ def setup_data(db):
     product = Product.objects.create(
         name='Wrench',
         category=category,
-        workshop_unit=workshop,
         unit_of_measure=uom,
         minimum_stock=5
     )
     
     item = ItemInstance.objects.create(
+        workshop_unit=WorkshopUnit.objects.first(),
         product=product,
         serial_number='TEST-001',
         location=location,
@@ -308,6 +308,7 @@ class TestTransactionQuerysets:
         
         # Create another item for returned checkout
         item2 = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=setup_data['product'],
             serial_number='TEST-002',
             location=setup_data['location'],

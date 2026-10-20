@@ -5,7 +5,7 @@ import csv
 from io import StringIO
 from typing import Dict, List, Tuple
 from django.db import transaction
-from apps.inventory.models import Product, ItemInstance, Location
+from apps.inventory.models import Product, ItemInstance, Location, WorkshopUnit
 
 
 class CSVImportService:
@@ -20,16 +20,17 @@ class CSVImportService:
             csv_content: CSV file content as string
             
         Returns:
-            List of dictionaries with keys: product_sku, serial_number, location
+            List of dictionaries with keys: product_sku, serial_number, location, workshop_unit
         """
         reader = csv.DictReader(StringIO(csv_content))
         rows = []
         
         for row in reader:
             rows.append({
-                'product_sku': row.get('product_sku', '').strip(),
-                'serial_number': row.get('serial_number', '').strip(),
-                'location': row.get('location', '').strip(),
+                'product_sku': str(row.get('product_sku') or '').strip(),
+                'serial_number': str(row.get('serial_number') or '').strip(),
+                'location': str(row.get('location') or '').strip(),
+                'workshop_unit': str(row.get('workshop_unit') or '').strip(),
             })
         
         return rows
@@ -40,7 +41,7 @@ class CSVImportService:
         Validate a single CSV row.
         
         Args:
-            row: Dictionary with product_sku, serial_number, location
+            row: Dictionary with product_sku, serial_number, location, workshop_unit
             row_number: Row number for error reporting
             
         Returns:
@@ -55,6 +56,9 @@ class CSVImportService:
 
         if not row['location']:
             return False, f"Row {row_number}: location is required"
+
+        if not row.get('workshop_unit'):
+            return False, f"Row {row_number}: workshop_unit is required"
         
         # Check if product exists
         try:
@@ -68,6 +72,9 @@ class CSVImportService:
         
         if not Location.objects.filter(name=row['location']).exists():
             return False, f"Row {row_number}: Location '{row['location']}' not found"
+
+        if not WorkshopUnit.objects.filter(code=row['workshop_unit']).exists():
+            return False, f"Row {row_number}: Workshop unit with code '{row['workshop_unit']}' not found"
         
         return True, ""
     
@@ -78,9 +85,9 @@ class CSVImportService:
         Import ItemInstances from CSV content.
         
         CSV Format:
-            product_sku,serial_number,location
-            COL-WRN-001,12345,Main Warehouse
-            COL-WRN-001,12346,Shelf A
+            product_sku,serial_number,location,workshop_unit
+            PRD-WRN-000001,12345,Main Warehouse,COL
+            PRD-WRN-000001,12346,Shelf A,COL
         
         Args:
             csv_content: CSV file content as string
@@ -142,6 +149,7 @@ class CSVImportService:
                     product=product,
                     serial_number=row['serial_number'],
                     location=location,
+                    workshop_unit=WorkshopUnit.objects.get(code=row['workshop_unit']),
                     status='available'
                 )
                 

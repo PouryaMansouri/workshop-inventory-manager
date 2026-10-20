@@ -103,14 +103,14 @@ class TransactionSelector:
         ).select_related(
             'item',
             'item__product',
-            'item__product__workshop_unit',
+            'item__workshop_unit',
             'user',
         ).order_by('-date_out')
 
         if holder_id:
             queryset = queryset.filter(user_id=holder_id)
         if workshop_unit_id:
-            queryset = queryset.filter(item__product__workshop_unit_id=workshop_unit_id)
+            queryset = queryset.filter(item__workshop_unit_id=workshop_unit_id)
         if is_active is True:
             queryset = queryset.filter(returned_at__isnull=True)
         elif is_active is False:
@@ -155,7 +155,9 @@ class TransactionSelector:
                 {
                     'transaction_id': txn.id,
                     'holder_name': holder_name,
-                    'workshop_unit': txn.item.product.workshop_unit.name,
+                    'workshop_unit': (
+                        txn.item.workshop_unit.name if txn.item.workshop_unit_id else ''
+                    ),
                     'item_name': txn.item.product.name,
                     'code': txn.item.barcode,
                     'serial': txn.item.serial_number,

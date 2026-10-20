@@ -34,7 +34,6 @@ def product(db, category, workshop_unit, unit_of_measure):
     return Product.objects.create(
         name='Adjustable Wrench',
         category=category,
-        workshop_unit=workshop_unit,
         unit_of_measure=unit_of_measure,
         is_consumable=False,
         minimum_stock=5
@@ -101,7 +100,8 @@ class TestValidateRow:
         row = {
             'product_sku': product.sku_code,
             'serial_number': '12345',
-            'location': location.name
+            'location': location.name,
+            'workshop_unit': 'COL',
         }
         
         is_valid, error = CSVImportService.validate_row(row, 2)
@@ -140,7 +140,8 @@ class TestValidateRow:
         row = {
             'product_sku': 'NONEXISTENT-SKU',
             'serial_number': '12345',
-            'location': 'Main Warehouse'
+            'location': 'Main Warehouse',
+            'workshop_unit': 'COL',
         }
         
         is_valid, error = CSVImportService.validate_row(row, 2)
@@ -152,6 +153,7 @@ class TestValidateRow:
         """Test validation fails when serial number already exists."""
         # Create existing item
         ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='DUPLICATE',
             location=location,
@@ -161,7 +163,8 @@ class TestValidateRow:
         row = {
             'product_sku': product.sku_code,
             'serial_number': 'DUPLICATE',
-            'location': location.name
+            'location': location.name,
+            'workshop_unit': 'COL',
         }
         
         is_valid, error = CSVImportService.validate_row(row, 2)
@@ -174,7 +177,8 @@ class TestValidateRow:
         row = {
             'product_sku': product.sku_code,
             'serial_number': '12345',
-            'location': 'Nonexistent Location'
+            'location': 'Nonexistent Location',
+            'workshop_unit': 'COL',
         }
         
         is_valid, error = CSVImportService.validate_row(row, 2)
@@ -202,9 +206,9 @@ class TestImportItems:
     
     def test_import_valid_csv_success(self, product, location):
         """Test successful import of valid CSV."""
-        csv_content = f"""product_sku,serial_number,location
-{product.sku_code},12345,{location.name}
-{product.sku_code},12346,{location.name}"""
+        csv_content = f"""product_sku,serial_number,location,workshop_unit
+{product.sku_code},12345,{location.name},COL
+{product.sku_code},12346,{location.name},COL"""
         
         result = CSVImportService.import_items(csv_content)
         
@@ -231,9 +235,9 @@ class TestImportItems:
     
     def test_import_with_validation_errors(self, product, location):
         """Test import fails when validation errors exist."""
-        csv_content = f"""product_sku,serial_number,location
-{product.sku_code},12345,{location.name}
-INVALID-SKU,12346,{location.name}"""
+        csv_content = f"""product_sku,serial_number,location,workshop_unit
+{product.sku_code},12345,{location.name},COL
+INVALID-SKU,12346,{location.name},COL"""
         
         result = CSVImportService.import_items(csv_content)
         
@@ -247,9 +251,9 @@ INVALID-SKU,12346,{location.name}"""
     
     def test_import_duplicate_serials_in_csv(self, product, location):
         """Test import fails when CSV contains duplicate serials."""
-        csv_content = f"""product_sku,serial_number,location
-{product.sku_code},12345,{location.name}
-{product.sku_code},12345,{location.name}"""
+        csv_content = f"""product_sku,serial_number,location,workshop_unit
+{product.sku_code},12345,{location.name},COL
+{product.sku_code},12345,{location.name},COL"""
         
         result = CSVImportService.import_items(csv_content)
         
@@ -277,9 +281,9 @@ INVALID-SKU,12346,{location.name}"""
     def test_import_large_batch(self, product, location):
         """Test importing large batch of items."""
         # Generate CSV with 100 items
-        lines = ['product_sku,serial_number,location']
+        lines = ['product_sku,serial_number,location,workshop_unit']
         for i in range(100):
-            lines.append(f"{product.sku_code},BATCH-{i:04d},{location.name}")
+            lines.append(f"{product.sku_code},BATCH-{i:04d},{location.name},COL")
         
         csv_content = '\n'.join(lines)
         result = CSVImportService.import_items(csv_content)
@@ -353,6 +357,7 @@ class TestImportItemsTransactionality:
         """Test that import rolls back all changes on error."""
         # Create one existing item
         ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='EXISTING',
             location=location,
@@ -362,9 +367,9 @@ class TestImportItemsTransactionality:
         initial_count = ItemInstance.objects.count()
         
         # Try to import with one valid and one duplicate
-        csv_content = f"""product_sku,serial_number,location
-{product.sku_code},NEW-001,{location.name}
-{product.sku_code},EXISTING,{location.name}"""
+        csv_content = f"""product_sku,serial_number,location,workshop_unit
+{product.sku_code},NEW-001,{location.name},COL
+{product.sku_code},EXISTING,{location.name},COL"""
         
         result = CSVImportService.import_items(csv_content)
         

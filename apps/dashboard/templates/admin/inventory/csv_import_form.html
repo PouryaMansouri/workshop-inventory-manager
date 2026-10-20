@@ -64,24 +64,25 @@
     
     <div class="csv-format-info">
         <h3>فرمت فایل CSV</h3>
-        <p>فایل CSV باید شامل سه ستون زیر باشد:</p>
+        <p>فایل CSV باید شامل چهار ستون زیر باشد:</p>
         <ul>
             <li><code>product_sku</code>: کد SKU محصول (الزامی)</li>
             <li><code>serial_number</code>: شماره سریال ابزار (الزامی)</li>
-            <li><code>location</code>: نام مکان (اختیاری)</li>
+            <li><code>location</code>: نام مکان (الزامی)</li>
+            <li><code>workshop_unit</code>: کد واحد کارگاهی (الزامی)</li>
         </ul>
         
         <h4>نمونه فایل CSV:</h4>
-        <div class="csv-example">product_sku,serial_number,location
-COL-WRN-001,12345,Main Warehouse
-COL-WRN-001,12346,Shelf A
-ELC-SCR-002,98765,Service Van</div>
+        <div class="csv-example">product_sku,serial_number,location,workshop_unit
+PRD-WRN-000001,12345,Main Warehouse,COL
+PRD-WRN-000001,12346,Shelf A,COL
+PRD-SCR-000002,98765,Service Van,ELC</div>
         
         <p><strong>نکات مهم:</strong></p>
         <ul>
             <li>محصول با SKU مشخص شده باید از قبل در سیستم موجود باشد</li>
             <li>شماره سریال نباید تکراری باشد</li>
-            <li>اگر مکان مشخص شود، باید از قبل در سیستم موجود باشد</li>
+            <li>مکان و واحد کارگاهی باید از قبل در سیستم موجود باشند</li>
             <li>در صورت بروز خطا، هیچ موردی وارد نمی‌شود</li>
         </ul>
     </div>

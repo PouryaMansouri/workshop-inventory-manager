@@ -63,13 +63,12 @@ class TestProduct:
         product = Product.objects.create(
             name='10mm Wrench',
             category=category,
-            workshop_unit=workshop,
             unit_of_measure=uom,
             minimum_stock=5
         )
         
         assert product.name == '10mm Wrench'
-        assert product.sku_code == 'COL-WRN-000001'
+        assert product.sku_code == 'PRD-WRN-000001'
         assert product.minimum_stock == 5
     
     def test_product_stock_calculation(self):
@@ -82,19 +81,20 @@ class TestProduct:
         product = Product.objects.create(
             name='10mm Wrench',
             category=category,
-            workshop_unit=workshop,
             unit_of_measure=uom,
             minimum_stock=5
         )
         
         # Create available items
         ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='001',
             location=location,
             status='available'
         )
         ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='002',
             location=location,
@@ -119,17 +119,17 @@ class TestItemInstance:
         product = Product.objects.create(
             name='10mm Wrench',
             category=category,
-            workshop_unit=workshop,
             unit_of_measure=uom
         )
         
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='001',
             location=location,
             status='available'
         )
         
-        assert item.barcode == 'COL-WRN-000001-001'
+        assert item.barcode == 'PRD-WRN-000001-001'
         assert item.is_available is True
         assert item.is_checked_out is False

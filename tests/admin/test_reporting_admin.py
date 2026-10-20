@@ -23,10 +23,10 @@ def admin_data(db):
     unit = UnitOfMeasure.objects.create(name='Piece', symbol='pcs')
     location = Location.objects.create(name='Shelf')
     product = Product.objects.create(
-        name='Wrench', category=category, workshop_unit=workshop,
+        name='Wrench', category=category,
         unit_of_measure=unit, minimum_stock=2,
     )
-    item = ItemInstance.objects.create(product=product, serial_number='A', location=location)
+    item = ItemInstance.objects.create(workshop_unit=WorkshopUnit.objects.first(), product=product, serial_number='A', location=location)
     return user, product, item
 
 

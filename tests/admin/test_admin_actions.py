@@ -30,7 +30,6 @@ def setup_admin_test(db):
     product = Product.objects.create(
         name='Wrench',
         category=category,
-        workshop_unit=workshop,
         unit_of_measure=uom,
         minimum_stock=5
     )
@@ -39,6 +38,7 @@ def setup_admin_test(db):
     items = []
     for i in range(5):
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number=f'TEST-{i:03d}',
             location=location,
@@ -398,9 +398,9 @@ class TestCSVImportAction:
         location = setup_admin_test['location']
         
         # Create CSV content
-        csv_content = f"""product_sku,serial_number,location
-{product.sku_code},CSV-001,{location.name}
-{product.sku_code},CSV-002,{location.name}"""
+        csv_content = f"""product_sku,serial_number,location,workshop_unit
+{product.sku_code},CSV-001,{location.name},COL
+{product.sku_code},CSV-002,{location.name},COL"""
 
         csv_file = SimpleUploadedFile(
             "test.csv",
@@ -484,6 +484,7 @@ class TestBulkOperationLimits:
         items = []
         for i in range(150):
             item = ItemInstance.objects.create(
+                workshop_unit=WorkshopUnit.objects.first(),
                 product=product,
                 serial_number=f'BULK-{i:04d}',
                 location=location,

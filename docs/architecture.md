@@ -131,23 +131,23 @@ Tool type/template.
 **Attributes:**
 - `name`: Product name
 - `category`: Foreign key to Category
-- `workshop_unit`: Foreign key to WorkshopUnit
 - `unit_of_measure`: Foreign key to UnitOfMeasure
 - `description`: Product description
 - `is_consumable`: Boolean flag
 - `minimum_stock`: Minimum stock threshold
-- `sku_code`: Auto-generated SKU (format: `[WORKSHOP]-[CATEGORY]-[ID]`)
+- `sku_code`: Auto-generated SKU (format: `PRD-[CATEGORY]-[ID]` for new products)
 
 **Business Rules:**
 - SKU is auto-generated on save
-- SKU format: `{workshop_code}-{category_code}-{padded_id}`
-- Example: `COL-WRN-001`
+- SKU format for new products: `PRD-{category_code}-{padded_id}`
+- Example: `PRD-WRN-000001`; existing workshop-prefixed codes remain valid
 
 #### 6. ItemInstance
 Individual physical tool.
 
 **Attributes:**
 - `product`: Foreign key to Product
+- `workshop_unit`: Foreign key to WorkshopUnit
 - `serial_number`: Unique serial number
 - `barcode`: Auto-generated barcode
 - `barcode_image`: Image field for barcode
@@ -156,7 +156,7 @@ Individual physical tool.
 
 **Business Rules:**
 - Barcode format: `{sku}-{serial_number}`
-- Example: `COL-WRN-001-4512`
+- Example: `PRD-WRN-000001-4512`
 - Status transitions controlled by transactions
 - Serial number must be unique per product
 
@@ -408,8 +408,8 @@ any → damaged (damaged transaction)
 - Easy to scan/search
 
 **Formats**:
-- SKU: `{workshop}-{category}-{id}` (e.g., `COL-WRN-001`)
-- Barcode: `{sku}-{serial}` (e.g., `COL-WRN-001-4512`)
+- SKU: `PRD-{category}-{id}` (e.g., `PRD-WRN-000001`)
+- Barcode: `{sku}-{serial}` (e.g., `PRD-WRN-000001-4512`)
 
 ### 5. Hierarchical Categories and Locations
 
@@ -496,8 +496,8 @@ def get_overdue_items():
 All frequently queried fields have indexes:
 
 - `Category`: name, code, parent
-- `Product`: name, sku_code, category, workshop_unit, is_consumable
-- `ItemInstance`: serial_number, barcode, product, location, status
+- `Product`: name, sku_code, category, is_consumable
+- `ItemInstance`: serial_number, barcode, product, workshop_unit, location, status
 - `Transaction`: item, user, transaction_type, date_out, created_at
 - `MaintenanceLog`: item, status, date_reported
 
@@ -616,9 +616,9 @@ The system supports bulk import of ItemInstances via CSV files.
 ### CSV Format
 
 ```csv
-product_sku,serial_number,location
-COL-WRN-001,12345,Main Warehouse
-COL-WRN-001,12346,Shelf A
+product_sku,serial_number,location,workshop_unit
+PRD-WRN-000001,12345,Main Warehouse,COL
+PRD-WRN-000001,12346,Shelf A,COL
 ```
 
 ### Import Process

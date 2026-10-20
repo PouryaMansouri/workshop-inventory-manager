@@ -56,7 +56,6 @@ def product(db, category, workshop_unit, unit_of_measure):
     return Product.objects.create(
         name='Adjustable Wrench',
         category=category,
-        workshop_unit=workshop_unit,
         unit_of_measure=unit_of_measure,
         is_consumable=False,
         minimum_stock=5
@@ -69,7 +68,6 @@ def consumable_product(db, category, workshop_unit, unit_of_measure):
     return Product.objects.create(
         name='Screws',
         category=category,
-        workshop_unit=workshop_unit,
         unit_of_measure=unit_of_measure,
         is_consumable=True,
         minimum_stock=100
@@ -80,6 +78,7 @@ def consumable_product(db, category, workshop_unit, unit_of_measure):
 def item(db, product, location):
     """Create an available item instance."""
     return ItemInstance.objects.create(
+        workshop_unit=WorkshopUnit.objects.first(),
         product=product,
         serial_number='12345',
         location=location,
@@ -234,6 +233,7 @@ class TestConsumeItem:
     def test_consume_consumable_item_success(self, consumable_product, location, user, admin_user):
         """Test successful consumption of consumable item."""
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=consumable_product,
             serial_number='CONS-001',
             location=location,
@@ -271,6 +271,7 @@ class TestConsumeItem:
     def test_consume_unavailable_item_fails(self, consumable_product, location, user, admin_user):
         """Test consumption of unavailable item fails."""
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=consumable_product,
             serial_number='CONS-002',
             location=location,

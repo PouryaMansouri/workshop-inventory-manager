@@ -273,7 +273,7 @@ class CategoryAdmin(admin.ModelAdmin):
 ### 2. Product Admin
 
 **Features:**
-- Advanced filters (category, workshop unit, consumable)
+- Advanced filters (category, consumable)
 - Search by name, SKU
 - Inline stock display
 - Autocomplete for foreign keys
@@ -287,19 +287,17 @@ class ProductAdmin(admin.ModelAdmin):
         'name', 
         'sku_code', 
         'category', 
-        'workshop_unit',
         'is_consumable',
         'current_stock_display',
         'minimum_stock'
     ]
     list_filter = [
         'is_consumable',
-        'workshop_unit',
         'category',
         LowStockFilter,
     ]
     search_fields = ['name', 'sku_code', 'description']
-    autocomplete_fields = ['category', 'workshop_unit', 'unit_of_measure']
+    autocomplete_fields = ['category', 'unit_of_measure']
     readonly_fields = ['sku_code', 'created_at', 'updated_at']
     
     fieldsets = (
@@ -307,7 +305,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('name', 'sku_code', 'description')
         }),
         ('دسته‌بندی', {
-            'fields': ('category', 'workshop_unit', 'unit_of_measure')
+            'fields': ('category', 'unit_of_measure')
         }),
         ('تنظیمات', {
             'fields': ('is_consumable', 'minimum_stock')
@@ -346,6 +344,7 @@ class ItemInstanceAdmin(admin.ModelAdmin):
     list_display = [
         'barcode',
         'product',
+        'workshop_unit',
         'serial_number',
         'location',
         'status_badge',
@@ -354,7 +353,7 @@ class ItemInstanceAdmin(admin.ModelAdmin):
     list_filter = [
         'status',
         'location',
-        'product__workshop_unit',
+        'workshop_unit',
         'product__category',
     ]
     search_fields = [
@@ -363,7 +362,7 @@ class ItemInstanceAdmin(admin.ModelAdmin):
         'product__name',
         'product__sku_code'
     ]
-    autocomplete_fields = ['product', 'location']
+    autocomplete_fields = ['product', 'workshop_unit', 'location']
     readonly_fields = [
         'barcode',
         'barcode_image_display',
@@ -382,7 +381,7 @@ class ItemInstanceAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('اطلاعات اصلی', {
-            'fields': ('product', 'serial_number', 'location', 'status')
+            'fields': ('product', 'workshop_unit', 'serial_number', 'location', 'status')
         }),
         ('بارکد', {
             'fields': ('barcode', 'barcode_image_display'),
@@ -862,7 +861,7 @@ ItemInstance Admin → Actions → "وارد کردن از فایل CSV"
 1. Select action from dropdown
 2. Upload CSV file with format:
    ```
-   product_sku,serial_number,location
+   product_sku,serial_number,location,workshop_unit
    ```
 3. System validates all rows
 4. If validation passes, items are created

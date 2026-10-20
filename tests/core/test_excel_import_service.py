@@ -28,11 +28,11 @@ class TestExcelImportService:
         product = Product.objects.create(
             name='Legacy Product',
             category=category,
-            workshop_unit=workshop,
             unit_of_measure=uom,
             minimum_stock=0,
         )
         item = ItemInstance.objects.create(
+            workshop_unit=WorkshopUnit.objects.first(),
             product=product,
             serial_number='LEG-001',
             location=location,

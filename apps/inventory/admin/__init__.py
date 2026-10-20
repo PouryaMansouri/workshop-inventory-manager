@@ -69,7 +69,6 @@ class ProductAdmin(admin.ModelAdmin):
         'name',
         'sku_code',
         'category',
-        'workshop_unit',
         'is_consumable',
         'current_stock_display',
         'minimum_stock',
@@ -78,12 +77,11 @@ class ProductAdmin(admin.ModelAdmin):
     
     list_filter = [
         'is_consumable',
-        'workshop_unit',
         'category',
     ]
     
     search_fields = ['name', 'sku_code', 'description']
-    autocomplete_fields = ['category', 'workshop_unit', 'unit_of_measure']
+    autocomplete_fields = ['category', 'unit_of_measure']
     readonly_fields = ['sku_code', 'current_stock_display', 'created_at', 'updated_at']
     ordering = ['name']
     
@@ -92,7 +90,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('name', 'sku_code', 'description')
         }),
         ('دسته‌بندی', {
-            'fields': ('category', 'workshop_unit', 'unit_of_measure')
+            'fields': ('category', 'unit_of_measure')
         }),
         ('تنظیمات موجودی', {
             'fields': ('is_consumable', 'minimum_stock', 'current_stock_display')
@@ -108,7 +106,6 @@ class ProductAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.select_related(
             'category',
-            'workshop_unit',
             'unit_of_measure'
         )
     
