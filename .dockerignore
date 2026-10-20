@@ -64,6 +64,7 @@ docker-compose.yml
 # Environment
 .env
 .env.local
+.agent-ssh.env
 .env.*.local
 
 # Backups
